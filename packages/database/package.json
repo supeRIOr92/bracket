@@ -1,0 +1,12 @@
+{
+"name": "@bracket/database",
+"version": "1.0.0",
+"scripts": {
+"migrate": "supabase db push",
+"generate-types": "supabase gen types typescript --local > src/types/database.ts",
+"studio": "supabase studio"
+},
+"devDependencies": {
+"supabase": "^1.170.0"
+}
+}
