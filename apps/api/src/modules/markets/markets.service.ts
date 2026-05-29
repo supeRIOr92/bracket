@@ -122,7 +122,7 @@ export class MarketsService {
       ];
 
       const contract = new ethers.Contract(
-        this.config.get('blockchain.contractAddress'),
+        this.config.get<string>('blockchain.contractAddress')!,
         contractAbi,
         provider,
       );

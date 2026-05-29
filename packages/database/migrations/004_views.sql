@@ -29,7 +29,7 @@ THEN ROUND((m.pool_c_stake / m.total_stake * 100)::NUMERIC, 2)
 ELSE 0 END AS pool_c_pct,
 CASE WHEN m.total_stake > 0
 THEN ROUND((m.pool_d_stake / m.total_stake * 100)::NUMERIC, 2)
-ELSE0 END AS pool_d_pct,
+ELSE 0 END AS pool_d_pct,
 CASE WHEN m.total_stake > 0
 THEN ROUND((m.pool_e_stake / m.total_stake * 100)::NUMERIC, 2)
 ELSE 0 END AS pool_e_pct,

@@ -97,7 +97,7 @@ dev_fee_collected NUMERIC(18,6) DEFAULT 0,
 jackpot_fee_collected NUMERIC(18,6) DEFAULT 0,
 flywheel_fee_collected NUMERIC(18,6) DEFAULT 0,
 
-created_at TIMESTAMP WITH TIMEZONE DEFAULT NOW(),
+created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
 updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -223,7 +223,8 @@ BEFORE UPDATE ON users
 FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
 CREATE TRIGGER trg_user_stats_updated_at
-BEFORE UPDATE ON user_statsFOR EACH ROW EXECUTE FUNCTION update_updated_at();
+BEFORE UPDATE ON user_stats
+FOR EACH ROW EXECUTE FUNCTION update_updated_at();
 
 CREATE TRIGGER trg_markets_updated_at
 BEFORE UPDATE ON markets

@@ -15,8 +15,8 @@ const PREDICTION_MARKET_ABI = [
 export class SettlementService {
   private readonly logger = new Logger(SettlementService.name);
   private provider: ethers.JsonRpcProvider;
-  private wallet: ethers.Wallet;
-  private contract: ethers.Contract;
+  private wallet!: ethers.Wallet;
+  private contract!: ethers.Contract;
 
   constructor(
     private config: ConfigService,
@@ -30,7 +30,7 @@ export class SettlementService {
     if (pk) {
       this.wallet = new ethers.Wallet(pk, this.provider);
       this.contract = new ethers.Contract(
-        this.config.get('blockchain.contractAddress'),
+        this.config.get<string>('blockchain.contractAddress')!,
         PREDICTION_MARKET_ABI,
         this.wallet,
       );
@@ -266,7 +266,7 @@ export class SettlementService {
     ];
 
     const feed = new ethers.Contract(
-      this.config.get('blockchain.chainlinkFeed'),
+      this.config.get<string>('blockchain.chainlinkFeed')!,
       feedAbi,
       this.provider,
     );
