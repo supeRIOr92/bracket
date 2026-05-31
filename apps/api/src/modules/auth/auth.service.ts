@@ -43,14 +43,15 @@ export class AuthService {
     };
   }
 
-  private async verifyPrivyToken(token: string): Promise<any> {
-    try {
-      const verifiedUser = await this.privy.verifyAuthToken(token);
-      return verifiedUser;
-    } catch {
-      return null;
-    }
-  }
+private async verifyPrivyToken(token: string): Promise<any> {
+try {
+const verifiedUser = await this.privy.verifyAuthToken(token);
+return verifiedUser;
+} catch (error) {
+console.error('Privy token verification failed:', String(error));
+return null;
+}
+}
 
   private async upsertUser(walletAddress: string, email?: string) {
     const db = this.supabase.getClient();
