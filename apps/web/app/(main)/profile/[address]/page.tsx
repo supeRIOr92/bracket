@@ -2,15 +2,12 @@
 
 import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
+import { usePrivy, useWallets } from '@privy-io/react-auth';
+import { useReadContract } from 'wagmi';
 import { usersApi, predictionsApi } from '@/lib/api';
-import {
-  formatAddress,
-  formatUSDC,
-  formatPRScore,
-  getPRLabel,
-  getPoolLabel,
-} from '@/lib/utils';
-import { TrendingUp, Zap, Target, Award, Share2 } from 'lucide-react';
+import { formatAddress, formatUSDC, formatPRScore, getPRLabel, getPoolLabel } from '@/lib/utils';
+import { USDC_ADDRESS } from '@/lib/constants';
+import { TrendingUp, Zap, Target, Award, Share2, Wallet } from 'lucide-react';
 
 const ARCHETYPE_LABEL: Record<string, string> = {
   consensus_predictor: 'Consensus Predictor',
@@ -19,7 +16,6 @@ const ARCHETYPE_LABEL: Record<string, string> = {
   value_hunter: 'Value Hunter',
 };
 
-// Build calendar heatmap data: last 12 weeks
 function buildCalendarData(predictions: any[]) {
   const today = new Date();
   const days: { date: string; status: 'win' | 'loss' | 'pending' | null }[] = [];
@@ -67,18 +63,10 @@ function CalendarHeatmap({ predictions }: { predictions: any[] }) {
         ))}
       </div>
       <div className="flex items-center gap-3 mt-3 text-xs text-gray-400">
-        <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded-sm bg-green-400 inline-block" /> Win
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded-sm bg-red-400 inline-block" /> Loss
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded-sm bg-yellow-300 inline-block" /> Pending
-        </span>
-        <span className="flex items-center gap-1">
-          <span className="w-3 h-3 rounded-sm bg-gray-100 inline-block" /> None
-        </span>
+        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-green-400 inline-block" /> Win</span>
+        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-red-400 inline-block" /> Loss</span>
+        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-yellow-300 inline-block" /> Pending</span>
+        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-gray-100 inline-block" /> None</span>
       </div>
     </div>
   );
@@ -86,6 +74,34 @@ function CalendarHeatmap({ predictions }: { predictions: any[] }) {
 
 export default function ProfilePage() {
   const { address } = useParams<{ address: string }>();
+  const { authenticated } = usePrivy();
+  const { wallets } = useWallets();
+
+  const connectedAddress = wallets[0]?.address?.toLowerCase();
+  const isOwnProfile = authenticated && connectedAddress === address?.toLowerCase();
+
+    const { data: rawBalance } = useReadContract({
+    address: USDC_ADDRESS,
+    abi: [
+        {
+        name: 'balanceOf',
+        type: 'function',
+        stateMutability: 'view',
+        inputs: [{ name: 'account', type: 'address' }],
+        outputs: [{ name: '', type: 'uint256' }],
+        },
+    ],
+    functionName: 'balanceOf',
+    args: [address as `0x${string}`],
+    chainId: 8453,
+    query: { enabled: isOwnProfile },
+    });
+
+    // USDC have 6 decimals
+    const usdcBalance = rawBalance != null
+    ? Number(rawBalance) / 1e6
+    : null;
+
 
   const { data: user, isLoading } = useQuery({
     queryKey: ['profile', address],
@@ -125,7 +141,6 @@ export default function ProfilePage() {
     ? ((stats.total_wins / stats.total_predictions) * 100).toFixed(1)
     : '0.0';
 
-  // PnL calculation
   const pnl = (predictions ?? []).reduce((acc: number, p: any) => {
     if (p.is_refund) return acc;
     if (p.is_winner === true) return acc + parseFloat(p.payout_amount || '0') - parseFloat(p.stake_amount);
@@ -135,7 +150,6 @@ export default function ProfilePage() {
 
   const pnlPositive = pnl >= 0;
 
-  // Share to X
   const shareText = encodeURIComponent(
     `My Bracket stats:\n✅ Win Rate: ${winRate}%\n🏆 Level: ${stats.level}\n📈 Best Streak: ${stats.best_streak} days\n💰 PnL: ${pnl >= 0 ? '+' : ''}${formatUSDC(pnl)}\n\nPredict smarter at bracket.gg 🎯`
   );
@@ -173,8 +187,8 @@ export default function ProfilePage() {
               </p>
               <p className="text-sm text-gray-400">{getPRLabel(stats.pr_score)}</p>
             </div>
-            
-              <a href={shareUrl}
+            <a
+              href={shareUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-1.5 text-xs bg-black text-white px-3 py-1.5 rounded-full hover:bg-gray-800 transition-colors"
@@ -190,8 +204,32 @@ export default function ProfilePage() {
         )}
       </div>
 
+      {/* USDC Balance — only on own profile */}
+      {isOwnProfile && (
+        <div className="bg-white rounded-2xl border border-gray-100 p-5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-blue-50 rounded-full flex items-center justify-center">
+              <Wallet className="w-4 h-4 text-blue-600" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-400">USDC Balance</p>
+              <p className="text-xl font-bold text-gray-900">
+                {usdcBalance != null
+                    ? formatUSDC(usdcBalance)
+                    : '—'}
+              </p>
+            </div>
+          </div>
+          <span className="text-xs text-gray-300">Base Network</span>
+        </div>
+      )}
+
       {/* PnL Banner */}
-      <div className={`rounded-2xl border p-5 flex items-center justify-between ${pnlPositive ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'}`}>
+      <div
+        className={`rounded-2xl border p-5 flex items-center justify-between ${
+          pnlPositive ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'
+        }`}
+      >
         <div>
           <p className="text-xs text-gray-400 mb-0.5">Total PnL</p>
           <p className={`text-2xl font-bold ${pnlPositive ? 'text-green-600' : 'text-red-500'}`}>
