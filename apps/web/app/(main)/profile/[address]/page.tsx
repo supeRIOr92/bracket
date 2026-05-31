@@ -1,13 +1,30 @@
 'use client';
 
+import { useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
 import { usePrivy, useWallets } from '@privy-io/react-auth';
 import { useReadContract } from 'wagmi';
 import { usersApi, predictionsApi } from '@/lib/api';
-import { formatAddress, formatUSDC, formatPRScore, getPRLabel, getPoolLabel } from '@/lib/utils';
+import {
+  formatAddress,
+  formatUSDC,
+  formatPRScore,
+  getPRLabel,
+  getPoolLabel,
+} from '@/lib/utils';
 import { USDC_ADDRESS } from '@/lib/constants';
-import { TrendingUp, Zap, Target, Award, Share2, Wallet } from 'lucide-react';
+import {
+  TrendingUp,
+  Zap,
+  Target,
+  Award,
+  Share2,
+  Wallet,
+  Copy,
+  Check,
+  ExternalLink,
+} from 'lucide-react';
 
 const ARCHETYPE_LABEL: Record<string, string> = {
   consensus_predictor: 'Consensus Predictor',
@@ -24,11 +41,10 @@ function buildCalendarData(predictions: any[]) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
     const dateStr = d.toISOString().split('T')[0];
-    const preds = predictions.filter(
-      (p) => p.created_at.split('T')[0] === dateStr,
-    );
 
+    const preds = predictions.filter((p) => p.created_at.split('T')[0] === dateStr);
     let status: 'win' | 'loss' | 'pending' | null = null;
+
     if (preds.length > 0) {
       if (preds.some((p) => p.is_winner === true)) status = 'win';
       else if (preds.some((p) => p.is_winner === false)) status = 'loss';
@@ -37,12 +53,12 @@ function buildCalendarData(predictions: any[]) {
 
     days.push({ date: dateStr, status });
   }
+
   return days;
 }
 
 function CalendarHeatmap({ predictions }: { predictions: any[] }) {
   const days = buildCalendarData(predictions);
-
   const colorMap = {
     win: 'bg-green-400',
     loss: 'bg-red-400',
@@ -63,10 +79,18 @@ function CalendarHeatmap({ predictions }: { predictions: any[] }) {
         ))}
       </div>
       <div className="flex items-center gap-3 mt-3 text-xs text-gray-400">
-        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-green-400 inline-block" /> Win</span>
-        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-red-400 inline-block" /> Loss</span>
-        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-yellow-300 inline-block" /> Pending</span>
-        <span className="flex items-center gap-1"><span className="w-3 h-3 rounded-sm bg-gray-100 inline-block" /> None</span>
+        <span className="flex items-center gap-1">
+          <span className="w-3 h-3 rounded-sm bg-green-400 inline-block" /> Win
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="w-3 h-3 rounded-sm bg-red-400 inline-block" /> Loss
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="w-3 h-3 rounded-sm bg-yellow-300 inline-block" /> Pending
+        </span>
+        <span className="flex items-center gap-1">
+          <span className="w-3 h-3 rounded-sm bg-gray-100 inline-block" /> None
+        </span>
       </div>
     </div>
   );
@@ -74,49 +98,46 @@ function CalendarHeatmap({ predictions }: { predictions: any[] }) {
 
 export default function ProfilePage() {
   const { address } = useParams<{ address: string }>();
-  const { authenticated } = usePrivy();
+  const { authenticated, exportWallet } = usePrivy();
   const { wallets } = useWallets();
+  const [copied, setCopied] = useState(false);
 
   const connectedAddress = wallets[0]?.address?.toLowerCase();
   const isOwnProfile = authenticated && connectedAddress === address?.toLowerCase();
+  const isEmbeddedWallet = wallets[0]?.walletClientType === 'privy';
 
-    const { data: rawBalance } = useReadContract({
+  const handleCopyAddress = () => {
+    navigator.clipboard.writeText(address ?? '');
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const { data: rawBalance } = useReadContract({
     address: USDC_ADDRESS,
     abi: [
-        {
+      {
         name: 'balanceOf',
         type: 'function',
         stateMutability: 'view',
         inputs: [{ name: 'account', type: 'address' }],
         outputs: [{ name: '', type: 'uint256' }],
-        },
+      },
     ],
     functionName: 'balanceOf',
     args: [address as `0x${string}`],
     chainId: 8453,
     query: { enabled: isOwnProfile },
-    });
-
-    // USDC have 6 decimals
-    const usdcBalance = rawBalance != null
-    ? Number(rawBalance) / 1e6
-    : null;
-
+  });
+  const usdcBalance = rawBalance != null ? Number(rawBalance) / 1e6 : null;
 
   const { data: user, isLoading } = useQuery({
     queryKey: ['profile', address],
-    queryFn: async () => {
-      const res = await usersApi.getProfileByAddress(address);
-      return res.data;
-    },
+    queryFn: async () => (await usersApi.getProfileByAddress(address)).data,
   });
 
   const { data: predictions } = useQuery({
     queryKey: ['predictions', user?.id],
-    queryFn: async () => {
-      const res = await predictionsApi.getHistory(user.id);
-      return res.data;
-    },
+    queryFn: async () => (await predictionsApi.getHistory(user.id)).data,
     enabled: !!user?.id,
   });
 
@@ -129,17 +150,14 @@ export default function ProfilePage() {
   }
 
   if (!user) {
-    return (
-      <div className="text-center py-24 text-gray-400">
-        User not found.
-      </div>
-    );
+    return <div className="text-center py-24 text-gray-400">User not found.</div>;
   }
 
   const stats = user.user_stats;
-  const winRate = stats.total_predictions > 0
-    ? ((stats.total_wins / stats.total_predictions) * 100).toFixed(1)
-    : '0.0';
+  const winRate =
+    stats.total_predictions > 0
+      ? ((stats.total_wins / stats.total_predictions) * 100).toFixed(1)
+      : '0.0';
 
   const pnl = (predictions ?? []).reduce((acc: number, p: any) => {
     if (p.is_refund) return acc;
@@ -149,9 +167,8 @@ export default function ProfilePage() {
   }, 0);
 
   const pnlPositive = pnl >= 0;
-
   const shareText = encodeURIComponent(
-    `My Bracket stats:\n✅ Win Rate: ${winRate}%\n🏆 Level: ${stats.level}\n📈 Best Streak: ${stats.best_streak} days\n💰 PnL: ${pnl >= 0 ? '+' : ''}${formatUSDC(pnl)}\n\nPredict smarter at bracket.gg 🎯`
+    `My Bracket stats:\n✅ Win Rate: ${winRate}%\n🏆 Level: ${stats.level}\n📈 Best Streak: ${stats.best_streak} days\n💰 PnL: ${pnl >= 0 ? '+' : ''}${formatUSDC(pnl)}\n\nPredict smarter at bracket.gg 🎯`,
   );
   const shareUrl = `https://twitter.com/intent/tweet?text=${shareText}`;
 
@@ -171,7 +188,26 @@ export default function ProfilePage() {
               <h1 className="text-xl font-bold text-gray-900">
                 {user.username || formatAddress(user.wallet_address)}
               </h1>
-              <p className="text-sm text-gray-400">{formatAddress(user.wallet_address)}</p>
+              <button
+                onClick={handleCopyAddress}
+                className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 transition-colors mt-0.5"
+                title="Click to copy address"
+              >
+                <span className="font-mono">{formatAddress(user.wallet_address)}</span>
+                {copied
+                  ? <Check className="w-3.5 h-3.5 text-green-500" />
+                  : <Copy className="w-3.5 h-3.5" />
+                }
+              </button>
+              <a
+                href={`https://basescan.org/address/${user.wallet_address}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-xs text-gray-300 hover:text-blue-500 transition-colors mt-0.5"
+              >
+                <ExternalLink className="w-3 h-3" />
+                View on Basescan
+              </a>
               {stats.archetype && (
                 <span className="inline-block mt-1 text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">
                   {ARCHETYPE_LABEL[stats.archetype] || stats.archetype}
@@ -179,12 +215,9 @@ export default function ProfilePage() {
               )}
             </div>
           </div>
-
           <div className="flex flex-col items-end gap-3">
             <div className="text-right">
-              <p className="text-3xl font-bold text-blue-600">
-                {formatPRScore(stats.pr_score)}
-              </p>
+              <p className="text-3xl font-bold text-blue-600">{formatPRScore(stats.pr_score)}</p>
               <p className="text-sm text-gray-400">{getPRLabel(stats.pr_score)}</p>
             </div>
             <a
@@ -198,29 +231,36 @@ export default function ProfilePage() {
             </a>
           </div>
         </div>
-
-        {user.bio && (
-          <p className="mt-4 text-gray-500 text-sm">{user.bio}</p>
-        )}
+        {user.bio && <p className="mt-4 text-gray-500 text-sm">{user.bio}</p>}
       </div>
 
-      {/* USDC Balance — only on own profile */}
+      {/* USDC Balance */}
       {isOwnProfile && (
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 bg-blue-50 rounded-full flex items-center justify-center">
-              <Wallet className="w-4 h-4 text-blue-600" />
+        <div className="bg-white rounded-2xl border border-gray-100 p-5">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 bg-blue-50 rounded-full flex items-center justify-center">
+                <Wallet className="w-4 h-4 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-xs text-gray-400">USDC Balance</p>
+                <p className="text-xl font-bold text-gray-900">
+                  {usdcBalance != null ? formatUSDC(usdcBalance) : '—'}
+                </p>
+              </div>
             </div>
-            <div>
-              <p className="text-xs text-gray-400">USDC Balance</p>
-              <p className="text-xl font-bold text-gray-900">
-                {usdcBalance != null
-                    ? formatUSDC(usdcBalance)
-                    : '—'}
-              </p>
+            <div className="flex flex-col items-end gap-2">
+              <span className="text-xs text-gray-300">Base Network</span>
+              {isEmbeddedWallet && (
+                <button
+                  onClick={() => exportWallet()}
+                  className="text-xs text-blue-600 hover:text-blue-700 underline underline-offset-2 transition-colors"
+                >
+                  Export Wallet
+                </button>
+              )}
             </div>
           </div>
-          <span className="text-xs text-gray-300">Base Network</span>
         </div>
       )}
 
@@ -270,7 +310,6 @@ export default function ProfilePage() {
       {/* Prediction History */}
       <div className="bg-white rounded-2xl border border-gray-100 p-6">
         <h2 className="font-semibold text-gray-900 mb-4">Prediction History</h2>
-
         {!predictions?.length ? (
           <p className="text-gray-400 text-sm text-center py-8">No predictions yet.</p>
         ) : (
@@ -281,11 +320,15 @@ export default function ProfilePage() {
                 className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0"
               >
                 <div className="flex items-center gap-3">
-                  <span className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                    p.is_winner === true ? 'bg-green-100 text-green-700' :
-                    p.is_winner === false ? 'bg-red-100 text-red-600' :
-                    'bg-gray-100 text-gray-500'
-                  }`}>
+                  <span
+                    className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+                      p.is_winner === true
+                        ? 'bg-green-100 text-green-700'
+                        : p.is_winner === false
+                          ? 'bg-red-100 text-red-600'
+                          : 'bg-gray-100 text-gray-500'
+                    }`}
+                  >
                     {getPoolLabel(p.pool_id)}
                   </span>
                   <div>
