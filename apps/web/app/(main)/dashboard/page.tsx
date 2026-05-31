@@ -1,5 +1,6 @@
 'use client';
 
+import MarketCountdown from '@/components/ui/MarketCountdown';
 import { usePrivy } from '@privy-io/react-auth';
 import { useTodayMarket, useMarketPools } from '@/hooks/useMarket';
 import { formatUSDC } from '@/lib/utils';
@@ -21,9 +22,11 @@ return (
 
 if (error || !market) {
 return (
-<div className="text-center py-24">
-<p className="text-gray-400 text-lg">No active market today.</p>
-<p className="text-gray-300 text-sm mt-2">Check back at midnight UTC.</p>
+<div className="text-center py-16 space-y-4">
+<div className="text-4xl">₿</div>
+<h2 className="text-xl font-bold text-gray-900">No active market today</h2>
+<p className="text-gray-400 text-sm">A new market opens every day at 00:00 UTC</p>
+<MarketCountdown />
 </div>
 );
 }
