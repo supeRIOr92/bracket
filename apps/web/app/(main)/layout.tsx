@@ -2,33 +2,54 @@
 
 import { usePrivy } from '@privy-io/react-auth';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
+import { authApi } from '@/lib/api';
 
 export default function MainLayout({
-children,
+  children,
 }: {
-children: React.ReactNode;
+  children: React.ReactNode;
 }) {
-const { authenticated, ready } = usePrivy();
-const router = useRouter();
+  const { authenticated, ready, getAccessToken } = usePrivy();
+  const router = useRouter();
+  const synced = useRef(false);
 
-useEffect(() => {
-if (ready && !authenticated) {
-router.push('/');
-}
-}, [ready, authenticated, router]);
+  useEffect(() => {
+    if (ready && !authenticated) {
+      router.push('/');
+    }
+  }, [ready, authenticated, router]);
 
-if (!ready || !authenticated) return null;
+  useEffect(() => {
+    if (!ready || !authenticated || synced.current) return;
 
-return (
-<div className="min-h-screen bg-gray-50 flex flex-col">
-<Navbar />
-<main className="max-w-6xl mx-auto px-6 py-8 w-full flex-1">
-{children}
-</main>
-<Footer />
-</div>
-);
+    const syncUser = async () => {
+      try {
+        const privyToken = await getAccessToken();
+        if (!privyToken) return;
+
+        const res = await authApi.login(privyToken);
+        localStorage.setItem('bracket_token', res.data.accessToken);
+        synced.current = true;
+      } catch (err) {
+        console.error('Auth sync failed:', err);
+      }
+    };
+
+    syncUser();
+  }, [ready, authenticated, getAccessToken]);
+
+  if (!ready || !authenticated) return null;
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <Navbar />
+      <main className="max-w-6xl mx-auto px-6 py-8 w-full flex-1">
+        {children}
+      </main>
+      <Footer />
+    </div>
+  );
 }
