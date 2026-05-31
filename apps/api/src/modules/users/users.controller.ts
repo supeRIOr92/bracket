@@ -54,6 +54,12 @@ export class UsersController {
     return this.usersService.getLeaderboard(category, +limit);
   }
 
+  @Get('address/:address')
+  @ApiOperation({ summary: 'Get profil user by wallet address' })
+  getProfileByAddress(@Param('address') address: string) {
+    return this.usersService.getProfileByWallet(address);
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get profil user by ID' })
   getProfile(@Param('id') id: string) {
