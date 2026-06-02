@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useState } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
-import { useMarketComments, type Comment } from '@/hooks/useMarketChat';
+import { useMarketComments, type Comment } from '@/hooks/useMarketComments';
 import { formatDistanceToNow } from 'date-fns';
 import { Send } from 'lucide-react';
 
