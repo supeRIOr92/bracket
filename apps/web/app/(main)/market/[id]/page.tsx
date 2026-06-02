@@ -1,7 +1,7 @@
 'use client';
 
 import { useParams } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePrivy, useWallets } from '@privy-io/react-auth';
 import { createPublicClient, createWalletClient, custom, http, parseUnits } from 'viem';
 import { base } from 'viem/chains';
@@ -11,6 +11,8 @@ import { formatUSDC } from '@/lib/utils';
 import { POOL_COLORS, USDC_ADDRESS, CONTRACT_ADDRESS } from '@/lib/constants';
 import { ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
+import LiveActivity from '@/components/market/LiveActivity';
+import LiveComments from '@/components/market/LiveComments';
 
 const USDC_ABI = [
   {
@@ -53,8 +55,14 @@ type BetStep = 'idle' | 'approving' | 'betting' | 'recording' | 'success' | 'err
 
 export default function MarketPage() {
   const { id } = useParams<{ id: string }>();
-  const { user } = usePrivy();
+  const { user, getAccessToken } = usePrivy();
   const { wallets } = useWallets();
+
+  const [token, setToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    getAccessToken().then(setToken).catch(() => {});
+  }, []);
 
   const { data: market, isLoading } = useMarket(id);
   const { data: pools } = useMarketPools(id);
@@ -101,7 +109,6 @@ export default function MarketPage() {
         chain: base,
         transport: http(),
       });
-
       const address = wallet.address as `0x${string}`;
       const amountInUnits = parseUnits(amount, 6);
 
@@ -196,147 +203,156 @@ export default function MarketPage() {
       </div>
     );
   }
+return(
+    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-  return (
-    <div className="space-y-6 max-w-2xl mx-auto">
+      {/* LEFT — main content */}
+      <div className="lg:col-span-2 space-y-6">
 
-      <div className="flex items-center gap-3">
-        <Link href="/dashboard" className="text-gray-400 hover:text-gray-600">
-          <ArrowLeft className="w-5 h-5" />
-        </Link>
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Place Prediction</h1>
-          <p className="text-gray-500 text-sm">
-            {new Date(market.date).toLocaleDateString('en-US', {
-              weekday: 'long', month: 'long', day: 'numeric',
+        <div className="flex items-center gap-3">
+          <Link href="/dashboard" className="text-gray-400 hover:text-gray-600">
+            <ArrowLeft className="w-5 h-5" />
+          </Link>
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">Place Prediction</h1>
+            <p className="text-gray-500 text-sm">
+              {new Date(market.date).toLocaleDateString('en-US', {
+                weekday: 'long', month: 'long', day: 'numeric',
+              })}
+            </p>
+          </div>
+        </div>
+
+        {/* Pool Selection */}
+        <div className="bg-white rounded-2xl border border-gray-100 p-6">
+          <h2 className="font-semibold text-gray-900 mb-4">1. Select Your Pool</h2>
+          <div className="space-y-3">
+            {displayPools.map((pool: any) => {
+              const colors = POOL_COLORS[pool.id as keyof typeof POOL_COLORS];
+              const pct = parseFloat(pool.participationPct || '0');
+              const isSelected = selectedPool === pool.id;
+
+              return (
+                <button
+                  key={pool.id}
+                  disabled={!isOpen}
+                  onClick={() => setSelectedPool(pool.id)}
+                  className={`w-full border-2 rounded-xl p-4 text-left transition-all ${
+                    isSelected
+                      ? `${colors.border} ${colors.bg} ring-2 ring-blue-500 ring-offset-1`
+                      : `${colors.border} ${colors.bg} hover:opacity-90`
+                  } disabled:opacity-50 disabled:cursor-not-allowed`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className={`font-bold text-sm w-6 ${colors.text}`}>
+                        {pool.label}
+                      </span>
+                      <span className="text-gray-600 text-sm">{pool.range}</span>
+                    </div>
+                    <div className="flex items-center gap-4 text-sm">
+                      <span className="text-gray-400">{pct}% of pool</span>
+                      <span className={`font-bold ${colors.text}`}>
+                        {pool.estimatedMultiplier !== '—' ? `${pool.estimatedMultiplier}x` : '—'}
+                      </span>
+                    </div>
+                  </div>
+                </button>
+              );
             })}
-          </p>
+          </div>
         </div>
+
+        {/* Amount Input */}
+        {selectedPool && (
+          <div className="bg-white rounded-2xl border border-gray-100 p-6">
+            <h2 className="font-semibold text-gray-900 mb-4">2. Enter Amount</h2>
+            <div className="relative">
+              <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">
+                USDC
+              </span>
+              <input
+                type="number"
+                min="5"
+                step="1"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                placeholder="Min. 5 USDC"
+                className="w-full border border-gray-200 rounded-xl py-3 pl-16 pr-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            {amount && !isValidAmount && (
+              <p className="text-red-500 text-sm mt-2">Minimum bet is 5 USDC</p>
+            )}
+            <div className="flex gap-2 mt-3">
+              {[10, 25, 50, 100].map((preset) => (
+                <button                key={preset}
+                  onClick={() => setAmount(String(preset))}
+                  className="px-3 py-1.5 bg-gray-100 text-gray-600 text-sm rounded-lg hover:bg-gray-200 transition-colors"
+                >
+                  {preset}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Confirm */}
+        {selectedPool && isValidAmount && (
+          <div className="bg-white rounded-2xl border border-gray-100 p-6">
+            <h2 className="font-semibold text-gray-900 mb-4">3. Confirm</h2>
+            <div className="space-y-2 text-sm mb-6">
+              <div className="flex justify-between">
+                <span className="text-gray-500">Pool</span>
+                <span className="font-medium">Pool {['A', 'B', 'C', 'D', 'E'][selectedPool - 1]}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Amount</span>
+                <span className="font-medium">{formatUSDC(amountNum)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-500">Protocol Fee</span>
+                <span className="font-medium">5%</span>
+              </div>
+            </div>
+
+            {step === 'error' && (
+              <div className="flex items-start gap-2 bg-red-50 text-red-600 text-sm p-3 rounded-lg mb-4">
+                <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
+                <span>{errorMsg}</span>
+              </div>
+            )}
+
+            <button
+              onClick={handlePlaceBet}
+              disabled={step === 'approving' || step === 'betting' || step === 'recording'}
+              className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {step === 'approving' && 'Approving USDC...'}
+              {step === 'betting' && 'Placing Bet...'}
+              {step === 'recording' && 'Recording...'}
+              {(step === 'idle' || step === 'error') && 'Place Prediction'}
+            </button>
+
+            <p className="text-xs text-gray-400 text-center mt-3">
+              Position is locked after confirmation. No early exit.
+            </p>
+          </div>
+        )}
+
+        {!isOpen && (
+          <div className="bg-gray-100 rounded-xl p-4 text-center text-gray-500 text-sm">
+            Betting is closed for this market.
+          </div>
+        )}
+
       </div>
 
-      {/* Pool Selection */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6">
-        <h2 className="font-semibold text-gray-900 mb-4">1. Select Your Pool</h2>
-        <div className="space-y-3">
-          {displayPools.map((pool: any) => {
-            const colors = POOL_COLORS[pool.id as keyof typeof POOL_COLORS];
-            const pct = parseFloat(pool.participationPct || '0');
-            const isSelected = selectedPool === pool.id;
-
-            return (
-              <button
-                key={pool.id}
-                disabled={!isOpen}
-                onClick={() => setSelectedPool(pool.id)}
-                className={`w-full border-2 rounded-xl p-4 text-left transition-all ${
-                  isSelected
-                    ? `${colors.border} ${colors.bg} ring-2 ring-blue-500 ring-offset-1`
-                    : `${colors.border} ${colors.bg} hover:opacity-90`
-                } disabled:opacity-50 disabled:cursor-not-allowed`}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className={`font-bold text-sm w-6 ${colors.text}`}>
-                      {pool.label}
-                    </span>
-                    <span className="text-gray-600 text-sm">{pool.range}</span>
-                  </div>
-                  <div className="flex items-center gap-4 text-sm">
-                    <span className="text-gray-400">{pct}% of pool</span>
-                    <span className={`font-bold ${colors.text}`}>
-                      {pool.estimatedMultiplier !== '—' ? `${pool.estimatedMultiplier}x` : '—'}
-                    </span>
-                  </div>
-                </div>
-              </button>
-            );
-          })}
-        </div>
+      {/* RIGHT — live panels */}
+      <div className="space-y-6">
+        <LiveActivity marketId={id} />
+        <LiveComments marketId={id} token={token} />
       </div>
-
-      {/* Amount Input */}
-      {selectedPool && (
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
-          <h2 className="font-semibold text-gray-900 mb-4">2. Enter Amount</h2>
-          <div className="relative">
-            <span className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 font-medium">
-              USDC
-            </span>
-            <input
-              type="number"
-              min="5"
-              step="1"
-              value={amount}
-              onChange={(e) => setAmount(e.target.value)}
-              placeholder="Min. 5 USDC"
-              className="w-full border border-gray-200 rounded-xl py-3 pl-16 pr-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            />
-          </div>
-          {amount && !isValidAmount && (
-            <p className="text-red-500 text-sm mt-2">Minimum bet is 5 USDC</p>
-          )}
-          <div className="flex gap-2 mt-3">
-            {[10, 25, 50, 100].map((preset) => (
-              <button
-                key={preset}
-                onClick={() => setAmount(String(preset))}
-                className="px-3 py-1.5 bg-gray-100 text-gray-600 text-sm rounded-lg hover:bg-gray-200 transition-colors"
-              >
-                {preset}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Confirm */}
-      {selectedPool && isValidAmount && (
-        <div className="bg-white rounded-2xl border border-gray-100 p-6">
-          <h2 className="font-semibold text-gray-900 mb-4">3. Confirm</h2>
-          <div className="space-y-2 text-sm mb-6">
-            <div className="flex justify-between">
-              <span className="text-gray-500">Pool</span>
-              <span className="font-medium">Pool {['A', 'B', 'C', 'D', 'E'][selectedPool - 1]}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Amount</span>
-              <span className="font-medium">{formatUSDC(amountNum)}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-500">Protocol Fee</span>
-              <span className="font-medium">5%</span>
-            </div>
-          </div>
-
-          {step === 'error' && (
-            <div className="flex items-start gap-2 bg-red-50 text-red-600 text-sm p-3 rounded-lg mb-4">
-              <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-              <span>{errorMsg}</span>
-            </div>
-          )}
-
-          <button
-            onClick={handlePlaceBet}
-            disabled={step === 'approving' || step === 'betting' || step === 'recording'}
-            className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-          >
-            {step === 'approving' && 'Approving USDC...'}
-            {step === 'betting' && 'Placing Bet...'}
-            {step === 'recording' && 'Recording...'}
-            {(step === 'idle' || step === 'error') && 'Place Prediction'}
-          </button>
-
-          <p className="text-xs text-gray-400 text-center mt-3">
-            Position is locked after confirmation. No early exit.
-          </p>
-        </div>
-      )}
-
-      {!isOpen && (
-        <div className="bg-gray-100 rounded-xl p-4 text-center text-gray-500 text-sm">
-          Betting is closed for this market.
-        </div>
-      )}
 
     </div>
   );
