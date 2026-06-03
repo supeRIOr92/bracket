@@ -55,13 +55,13 @@ type BetStep = 'idle' | 'approving' | 'betting' | 'recording' | 'success' | 'err
 
 export default function MarketPage() {
   const { id } = useParams<{ id: string }>();
-  const { user, getAccessToken } = usePrivy();
+  const { user } = usePrivy();
   const { wallets } = useWallets();
 
   const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
-    getAccessToken().then(setToken).catch(() => {});
+    setToken(localStorage.getItem('bracket_token'));
   }, []);
 
   const { data: market, isLoading } = useMarket(id);

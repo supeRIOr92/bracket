@@ -71,7 +71,7 @@ type BetStep = 'idle' | 'approving' | 'betting' | 'recording' | 'success' | 'err
 type ClaimStep = 'idle' | 'claiming' | 'recording' | 'success' | 'error';
 
 export default function DashboardPage() {
-  const { getAccessToken, user: privyUser } = usePrivy();
+  const { user: privyUser } = usePrivy();
   const { wallets } = useWallets();
   const [token, setToken] = useState<string | null>(null);
   const { data: market, isLoading, error } = useTodayMarket();
@@ -84,13 +84,14 @@ export default function DashboardPage() {
   const [errorMsg, setErrorMsg] = useState('');
   const [txHash, setTxHash] = useState('');
 
-const [claimStep, setClaimStep] = useState<ClaimStep>('idle');
-const [claimError, setClaimError] = useState('');
-const [showShareCard, setShowShareCard] = useState(false);
-const [showWinShareCard, setShowWinShareCard] = useState(false);
+  const [claimStep, setClaimStep] = useState<ClaimStep>('idle');
+  const [claimError, setClaimError] = useState('');
+  const [showShareCard, setShowShareCard] = useState(false);
+  const [showWinShareCard, setShowWinShareCard] = useState(false);
 
   useEffect(() => {
-    getAccessToken().then(setToken).catch(() => {});
+    const t = localStorage.getItem('bracket_token');
+    setToken(t);
   }, []);
 
   // Fetch user profile for stats
