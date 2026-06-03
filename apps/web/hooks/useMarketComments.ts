@@ -8,7 +8,7 @@ export interface Comment {
   users: {
     username: string | null;
     wallet_address: string;
-    avatar_url: string | null;  // tambah ini
+    avatar_url: string | null;
   };
 }
 
@@ -17,37 +17,26 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-export interface Comment {
-  id: string;
-  content: string;
-  created_at: string;
-  users: {
-    username: string | null;
-    wallet_address: string;
-    avatar_url: string | null;
-  };
-}
-
 export function useMarketComments(marketId: string) {
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!marketId) return;
-
-    // Initial fetch
-    supabase
+  const fetchComments = async () => {
+    const { data } = await supabase
       .from('market_comments')
       .select(`id, content, created_at, users(username, wallet_address, avatar_url)`)
       .eq('market_id', marketId)
       .order('created_at', { ascending: false })
-      .limit(50)
-      .then(({ data }) => {
-        if (data) setComments(data as unknown as Comment[]);
-        setLoading(false);
-      });
+      .limit(50);
+    if (data) setComments(data as unknown as Comment[]);
+    setLoading(false);
+  };
 
-    // Realtime subscription
+  useEffect(() => {
+    if (!marketId) return;
+
+    fetchComments();
+
     const channel = supabase
       .channel(`comments:${marketId}`)
       .on(
@@ -58,8 +47,9 @@ export function useMarketComments(marketId: string) {
           table: 'market_comments',
           filter: `market_id=eq.${marketId}`,
         },
-        (payload) => {
-          setComments((prev) => [payload.new as Comment, ...prev]);
+        () => {
+          // Re-fetch biar dapat data lengkap termasuk users
+          fetchComments();
         }
       )
       .subscribe();
