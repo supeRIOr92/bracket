@@ -3,6 +3,7 @@ import { Cron } from '@nestjs/schedule';
 import { ConfigService } from '@nestjs/config';
 import { SupabaseService } from '../../common/supabase/supabase.service';
 import { ethers } from 'ethers';
+import { XpService } from '../xp/xp.service';
 
 const PREDICTION_MARKET_ABI = [
   'function settleMarket(uint256 marketId) external',
@@ -21,6 +22,7 @@ export class SettlementService {
   constructor(
     private config: ConfigService,
     private supabase: SupabaseService,
+    private xp: XpService,
   ) {
     this.provider = new ethers.JsonRpcProvider(
       this.config.get('blockchain.rpcUrl'),
@@ -184,6 +186,7 @@ export class SettlementService {
       // Update predictions
       if (!isRefund && winningPool) {
         await this.updatePredictions(market.id, winningPool, parseFloat(market.total_stake));
+        await this.xp.processMarketSettlement(market.id);
       } else if (isRefund) {
         await this.markPredictionsAsRefund(market.id);
       }

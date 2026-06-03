@@ -11,10 +11,11 @@ export function Navbar() {
   const pathname = usePathname();
   const walletAddress = user?.wallet?.address ?? '';
 
-  const navLinks = [
+    const navLinks = [
     { href: '/dashboard', label: 'Market', icon: TrendingUp },
     { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
     { href: '/jackpot', label: 'Jackpot', icon: Trophy },
+    { href: '/season', label: 'Season', icon: Trophy },
     {
       href: `/profile/${walletAddress}`,
       label: walletAddress ? formatAddress(walletAddress) : 'Profile',

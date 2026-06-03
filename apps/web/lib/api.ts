@@ -21,6 +21,7 @@ export const marketsApi = {
   getById: (id: string) => api.get(`/api/markets/${id}`),
   getToday: () => api.get('/api/markets/today'),
   getPools: (id: string) => api.get(`/api/markets/${id}/pools`),
+  getYesterdayWinners: () => api.get('/api/markets/yesterday/winners'),
 };
 
 // Predictions

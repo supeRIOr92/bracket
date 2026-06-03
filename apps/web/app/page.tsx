@@ -3,6 +3,7 @@
 import { usePrivy } from '@privy-io/react-auth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { ArrowRight, TrendingUp, Users, Zap, Shield } from 'lucide-react';
 
 export default function LandingPage() {
@@ -24,7 +25,42 @@ router.push('/dashboard');
     }
   };
 
-  const pools = [
+    const { data: liveMarket } = useQuery({
+    queryKey: ['landing-market'],
+    queryFn: async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/markets/today`);
+        if (!res.ok) return null;
+        return res.json();
+      } catch { return null; }
+    },
+    refetchInterval: 30_000,
+  });
+
+  const { data: livePools } = useQuery({queryKey: ['landing-pools', liveMarket?.id],
+    queryFn: async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/markets/${liveMarket!.id}/pools`);
+        if (!res.ok) return null;
+        return res.json();
+      } catch { return null; }
+    },
+    enabled: !!liveMarket?.id,
+    refetchInterval: 15_000,
+  });
+  const pools = livePools?.length ? livePools.map((p: any, i: number) => ({
+    label: p.label,
+    range: p.range,
+    pct: `${p.participationPct}%`,
+    multiplier: p.estimatedMultiplier !== '—' ? `${p.estimatedMultiplier}x` : '—',
+    color: [
+      'border-blue-200 bg-blue-50',
+      'border-sky-200 bg-sky-50',
+      'border-indigo-200 bg-indigo-50',
+      'border-violet-200 bg-violet-50',
+      'border-purple-200 bg-purple-50',
+    ][i],
+  })) : [
     { label: 'A', range: '< $101,500',           pct: '8%',  multiplier: '11.4x', color: 'border-blue-200 bg-blue-50'   },
     { label: 'B', range: '$101,500 - $103,000',   pct: '18%', multiplier: '5.1x',  color: 'border-sky-200 bg-sky-50'     },
     { label: 'C', range: '$103,000 - $105,000',   pct: '46%', multiplier: '2.0x',  color: 'border-indigo-200 bg-indigo-50' },
@@ -176,11 +212,13 @@ router.push('/dashboard');
 
       {/* Pool Example */}
       <section className="max-w-6xl mx-auto px-6 py-24">
-        <h2 className="text-3xl font-bold text-center mb-4">
-          {"Today's Market — Example"}
+                <h2 className="text-3xl font-bold text-center mb-4">
+          {"Today's Market"}
         </h2>
         <p className="text-gray-500 text-center mb-12">
-          BTC @ $104,000 — Pick your range
+          {liveMarket
+            ? `BTC @ $${liveMarket.btc_price_at_open?.toLocaleString() ?? '—'} — Live market`
+            : 'BTC range prediction — Pick your pool'}
         </p>
         <div className="max-w-2xl mx-auto space-y-3">
           {pools.map((pool) => (

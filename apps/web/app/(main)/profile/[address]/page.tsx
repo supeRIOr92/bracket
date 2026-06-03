@@ -19,12 +19,13 @@ import {
   Zap,
   Target,
   Award,
-  Share2,
   Wallet,
   Copy,
   Check,
   ExternalLink,
 } from 'lucide-react';
+import ShareCard from '@/components/market/ShareCard';
+
 
 const ARCHETYPE_LABEL: Record<string, string> = {
   consensus_predictor: 'Consensus Predictor',
@@ -101,7 +102,7 @@ export default function ProfilePage() {
   const { authenticated, exportWallet } = usePrivy();
   const { wallets } = useWallets();
   const [copied, setCopied] = useState(false);
-
+  const [showShareCard, setShowShareCard] = useState(false);
   const connectedAddress = wallets[0]?.address?.toLowerCase();
   const isOwnProfile = authenticated && connectedAddress === address?.toLowerCase();
   const isEmbeddedWallet = wallets[0]?.walletClientType === 'privy';
@@ -167,11 +168,6 @@ export default function ProfilePage() {
   }, 0);
 
   const pnlPositive = pnl >= 0;
-  const shareText = encodeURIComponent(
-    `My Bracket stats:\n✅ Win Rate: ${winRate}%\n🏆 Level: ${stats.level}\n📈 Best Streak: ${stats.best_streak} days\n💰 PnL: ${pnl >= 0 ? '+' : ''}${formatUSDC(pnl)}\n\nPredict smarter at bracket.gg 🎯`,
-  );
-  const shareUrl = `https://twitter.com/intent/tweet?text=${shareText}`;
-
   return (
     <div className="space-y-6">
 
@@ -220,19 +216,39 @@ export default function ProfilePage() {
               <p className="text-3xl font-bold text-blue-600">{formatPRScore(stats.pr_score)}</p>
               <p className="text-sm text-gray-400">{getPRLabel(stats.pr_score)}</p>
             </div>
-            <a
-              href={shareUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 text-xs bg-black text-white px-3 py-1.5 rounded-full hover:bg-gray-800 transition-colors"
-            >
-              <Share2 className="w-3 h-3" />
-              Share on X
-            </a>
+            <button
+                onClick={() => setShowShareCard(true)}
+                className="flex items-center gap-1.5 text-xs bg-black text-white px-3 py-1.5 rounded-full hover:bg-gray-800 transition-colors"
+                >
+                Share Stats
+            </button>
           </div>
         </div>
         {user.bio && <p className="mt-4 text-gray-500 text-sm">{user.bio}</p>}
       </div>
+
+      {/* Share Card Modal */}
+      {showShareCard && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setShowShareCard(false)}>
+          <div className="bg-white rounded-2xl p-5 w-full max-w-sm mx-4" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-4">
+      <     h3 className="font-semibold text-gray-900">Share Your Stats</h3>
+        <button onClick={() => setShowShareCard(false)} className="text-gray-400 hover:text-gray-600 text-xl leading-none">×</button>
+          </div>
+          <ShareCard
+              mode="stats"
+              username={user.username || formatAddress(user.wallet_address)}
+              prScore={stats.pr_score}
+              level={stats.level}
+              winRate={winRate}
+              totalPredictions={stats.total_predictions}
+              bestStreak={stats.best_streak}
+              pnl={pnl}
+              archetype={stats.archetype}
+          />
+          </div>
+        </div>
+      )}
 
       {/* USDC Balance */}
       {isOwnProfile && (
@@ -306,6 +322,43 @@ export default function ProfilePage() {
       {predictions && predictions.length > 0 && (
         <CalendarHeatmap predictions={predictions} />
       )}
+
+      {/* Prediction Style */}
+      {predictions && predictions.length > 0 && (() => {
+      const poolCounts = [0, 0, 0, 0, 0];
+      predictions.forEach((p: any) => {
+      if (p.pool_id >= 1 && p.pool_id <= 5) poolCounts[p.pool_id - 1]++;
+      });
+      const total = poolCounts.reduce((a, b) => a + b, 0);
+      const poolLabels = ['A', 'B', 'C', 'D', 'E'];
+      const poolNames = ['Extreme Bear', 'Bearish', 'Neutral', 'Bullish', 'Extreme Bull'];
+      const poolColors = ['bg-blue-400', 'bg-sky-400', 'bg-indigo-400', 'bg-violet-400', 'bg-purple-400'];
+
+      return (
+        <div className="bg-white rounded-2xl border border-gray-100 p-6">
+        <h2 className="font-semibold text-gray-900 mb-4">Prediction Style</h2>
+        <div className="space-y-3">
+      {poolLabels.map((label, i) => {
+      const pct = total > 0 ? Math.round((poolCounts[i] / total) * 100) : 0;
+      return (
+        <div key={label} className="flex items-center gap-3">
+          <span className="text-xs font-bold text-gray-500 w-4">{label}</span>
+          <span className="text-xs text-gray-400 w-24">{poolNames[i]}</span>
+          <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+      <div
+      className={`h-full rounded-full ${poolColors[i]} transition-all duration-500`}
+      style={{ width: `${pct}%` }}
+      />
+      </div>
+      <span className="text-xs text-gray-500 w-8 text-right">{pct}%</span>
+      <span className="text-xs text-gray-400 w-8 text-right">{poolCounts[i]}x</span>
+      </div>
+      );
+      })}
+      </div>
+      </div>
+      );
+      })()}
 
       {/* Prediction History */}
       <div className="bg-white rounded-2xl border border-gray-100 p-6">

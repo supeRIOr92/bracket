@@ -11,7 +11,7 @@ function shortAddr(addr: string) {
 
 const POOL_LABELS = ['A', 'B', 'C', 'D', 'E'];
 
-function ActivityRow({ item }: { item: Activity }) {
+function ActivityRow({ item, isOpen }: { item: Activity; isOpen: boolean }) {
   const poolLabel = POOL_LABELS[(item.pool_id ?? 1) - 1];
   const colors = POOL_COLORS[(item.pool_id ?? 1) as keyof typeof POOL_COLORS];
   const name = item.users.username || shortAddr(item.users.wallet_address);
@@ -19,19 +19,27 @@ function ActivityRow({ item }: { item: Activity }) {
 
   return (
     <div className="flex items-start gap-3 py-2.5 border-b border-gray-50 last:border-0">
-      {/* Pool badge */}
+      {/* Pool badge — hidden selama betting open */}
       <span
-        className={`mt-0.5 flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${colors.bg} ${colors.text}`}
+        className={`mt-0.5 flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
+          isOpen ? 'bg-gray-100 text-gray-400' : `${colors.bg} ${colors.text}`
+        }`}
       >
-        {poolLabel}
+        {isOpen ? '?' : poolLabel}
       </span>
 
       <div className="flex-1 min-w-0">
         <p className="text-sm text-gray-700 leading-snug">
           <span className="font-semibold text-gray-900">{name}</span>
-          {' '}placed{' '}
-          <span className="font-semibold text-gray-900">{formatUSDC(amount)}</span>
-          {' '}on Pool {poolLabel}
+          {isOpen ? (
+            <> placed a prediction</>
+          ) : (
+            <>
+              {' '}placed{' '}
+              <span className="font-semibold text-gray-900">{formatUSDC(amount)}</span>
+              {' '}on Pool {poolLabel}
+            </>
+          )}
         </p>
         <p className="text-xs text-gray-400 mt-0.5">
           {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
@@ -43,9 +51,10 @@ function ActivityRow({ item }: { item: Activity }) {
 
 interface Props {
   marketId: string;
+  isOpen?: boolean;
 }
 
-export default function LiveActivity({ marketId }: Props) {
+export default function LiveActivity({ marketId, isOpen = false }: Props) {
   const { activity, loading } = useMarketActivity(marketId);
 
   return (
@@ -72,7 +81,7 @@ export default function LiveActivity({ marketId }: Props) {
           </p>
         )}
         {activity.map((item) => (
-          <ActivityRow key={item.id} item={item} />
+          <ActivityRow key={item.id} item={item} isOpen={isOpen} />
         ))}
       </div>
     </div>

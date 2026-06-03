@@ -30,4 +30,9 @@ export class MarketsController {
   getPoolDistribution(@Param('id') id: string) {
     return this.marketsService.getPoolDistribution(id);
   }
-}
+
+  @Get('yesterday/winners')
+  @ApiOperation({ summary: 'Daftar pemenang market kemarin' })
+  getYesterdayWinners() {
+    return this.marketsService.getYesterdayWinners();
+  }

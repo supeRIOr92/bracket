@@ -2,7 +2,9 @@
 
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { useWallets } from '@privy-io/react-auth';
 import { usersApi } from '@/lib/api';
+import { formatUSDC } from '@/lib/utils';
 import { formatPRScore, getPRLabel, formatAddress } from '@/lib/utils';
 import { Trophy, TrendingUp, Zap, Target } from 'lucide-react';
 
@@ -16,12 +18,24 @@ const CATEGORIES = [
 export default function LeaderboardPage() {
 const [category, setCategory] = useState('pr_score');
 
+const { wallets } = useWallets();
+const walletAddress = wallets[0]?.address?.toLowerCase();
+
 const { data: leaderboard, isLoading } = useQuery({
 queryKey: ['leaderboard', category],
 queryFn: async () => {
 const res = await usersApi.getLeaderboard(category);
 return res.data;
 },
+});
+
+const { data: myRank } = useQuery({
+queryKey: ['my-rank', walletAddress],
+queryFn: async () => {
+const profile = await usersApi.getProfileByAddress(walletAddress!);
+return profile.data;
+},
+enabled: !!walletAddress,
 });
 
 return (
@@ -113,6 +127,46 @@ index === 2 ? 'text-amber-600' :
 )}
 </div>
 
+{/* Your Rank */}
+{myRank?.user_stats && (
+<div className="bg-blue-50 border border-blue-100 rounded-2xl p-4 flex items-center justify-between">
+<div className="flex items-center gap-3">
+<span className="text-blue-600 font-bold text-sm">Your Rank</span>
+<div>
+<p className="font-medium text-gray-900">
+{myRank.username || myRank.wallet_address?.slice(0, 8) + '...'}
+</p>
+<p className="text-xs text-gray-400">
+{myRank.user_stats.total_predictions} predictions
+</p>
+</div>
+</div>
+<div className="text-right">
+{category === 'pr_score' && (
+<p className="font-bold text-blue-600">{formatPRScore(myRank.user_stats.pr_score)}</p>
+)}
+{category === 'win_rate' && (
+<p className="font-bold text-blue-600">
+{myRank.user_stats.total_predictions > 0
+? ((myRank.user_stats.total_wins / myRank.user_stats.total_predictions) * 100).toFixed(1)
+: '0.0'}%
+</p>
+)}
+{category === 'streak' && (
+<p className="font-bold text-blue-600">{myRank.user_stats.best_streak} days</p>
+)}
+{category === 'contrarian' && (
+<p className="font-bold text-blue-600">
+{myRank.user_stats.contrarian_attempts > 0
+? ((myRank.user_stats.contrarian_wins / myRank.user_stats.contrarian_attempts) * 100).toFixed(1)
+: '0.0'}%
+</p>
+)}
+</div>
+</div>
+)}
+
 </div>
 );
 }
+

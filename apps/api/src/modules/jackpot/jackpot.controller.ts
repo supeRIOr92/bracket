@@ -15,6 +15,12 @@ getCurrentJackpot() {
 return this.jackpotService.getCurrentJackpot();
 }
 
+@Get('history')
+@ApiOperation({ summary: 'Past jackpot winners' })
+getHistory() {
+return this.jackpotService.getHistory();
+}
+
 @Get('eligibility')
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()

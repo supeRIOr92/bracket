@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Cron } from '@nestjs/schedule';
 import { SupabaseService } from '../../common/supabase/supabase.service';
 import { ethers } from 'ethers';
 
@@ -107,11 +108,80 @@ export class MarketsService {
     });
   }
 
-  /**
-   * Sync pool stakes dari blockchain ke database.
-   * Dipanggil oleh event listener atau cron job.
+    /**
+   * Ambil pemenang dari market kemarin.
    */
-  async syncPoolStakes(marketId: string, chainMarketId: number) {
+  async getYesterdayWinners(limit = 10) {
+    const db = this.supabase.getClient();
+
+    const yesterday = new Date();
+    yesterday.setUTCDate(yesterday.getUTCDate() - 1);
+    const dateStr = yesterday.toISOString().split('T')[0];
+
+    const { data: market } = await db
+      .from('markets')
+      .select('id, winning_pool, settlement_price, pool_a_upper, pool_b_upper, pool_c_upper, pool_d_upper')
+      .eq('date', dateStr)
+      .eq('status', 'settled')
+      .single();
+
+    if (!market) return { market: null, winners: [] };
+
+    const { data: winners } = await db
+      .from('predictions')
+      .select(`
+        id,
+        pool_id,
+        stake_amount,
+        payout_amount,
+        users(id, username, wallet_address)
+      `)
+      .eq('market_id', market.id)
+      .eq('is_winner', true)
+      .order('payout_amount', { ascending: false })
+      .limit(limit);
+
+    return {
+      market: {
+        date: dateStr,
+        winning_pool: market.winning_pool,
+        settlement_price: market.settlement_price,
+      },
+      winners: winners || [],
+    };
+  }
+
+  /**
+   * Cron sync pool stakes setiap 5 menit.
+    */
+    @Cron('*/5 * * * *', { timeZone: 'UTC' })
+    async syncAllActiveMarkets() {
+    const contractAddress = this.config.get<string>('blockchain.contractAddress');
+    if (
+    !contractAddress ||
+    contractAddress === '0x0000000000000000000000000000000000000000'
+    ) return;
+
+    const db = this.supabase.getClient();
+    const { data: markets } = await db
+    .from('markets')
+    .select('id, chain_market_id')
+    .eq('status', 'open')
+    .not('chain_market_id', 'is', null);
+
+    if (!markets?.length) return;
+
+    for (const market of markets) {
+    await this.syncPoolStakes(market.id, market.chain_market_id);
+    }
+    }
+
+    /**
+    * Sync pool stakes dari blockchain ke database.
+    * Dipanggil oleh event listener atau cron job.
+    */
+    async syncPoolStakes(marketId: string, chainMarketId: number) {
+
     try {
       const provider = new ethers.JsonRpcProvider(
         this.config.get('blockchain.rpcUrl'),

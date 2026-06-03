@@ -93,11 +93,49 @@ export class JackpotService {
     };
   }
 
-  /**
-   * Weekly jackpot draw — setiap Senin jam 12:00 UTC.
-   */
-  @Cron('0 12 * * 1', { timeZone: 'UTC' })
-  async weeklyDraw() {
+    /**
+    * Ambil history jackpot draws.
+    */
+    async getHistory(limit = 20) {
+    const db = this.supabase.getClient();
+
+    const { data, error } = await db
+    .from('jackpot_draws')
+    .select(`
+    *,
+    users(username, wallet_address)
+    `)
+    .order('draw_date', { ascending: false })
+    .limit(limit);
+
+    if (error) throw new Error(error.message);
+    return data || [];
+    }
+
+    /**
+    * Daily eligibility refresh — setiap hari jam 01:00 UTC.
+    */
+    @Cron('0 1 * * *', { timeZone: 'UTC' })
+    async refreshAllEligibility() {
+    this.logger.log('Refreshing jackpot eligibility for all users...');
+    const db = this.supabase.getClient();
+
+    const { data: users } = await db.from('users').select('id');
+    if (!users?.length) return;
+
+    for (const user of users) {
+    await this.checkEligibility(user.id);
+    }
+
+    this.logger.log(`Eligibility refreshed for ${users.length} users`);
+    }
+
+    /**
+    * Weekly jackpot draw — setiap Senin jam 12:00 UTC.
+    */
+    @Cron('0 12 * * 1', { timeZone: 'UTC' })
+    async weeklyDraw() {
+
     this.logger.log('Running weekly jackpot draw...');
 
     const db = this.supabase.getClient();
