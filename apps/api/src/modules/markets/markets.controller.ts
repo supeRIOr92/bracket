@@ -36,3 +36,4 @@ export class MarketsController {
   getYesterdayWinners() {
     return this.marketsService.getYesterdayWinners();
   }
+}

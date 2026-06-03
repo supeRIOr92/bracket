@@ -5,7 +5,13 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowRight, TrendingUp, Users, Zap, Shield } from 'lucide-react';
-
+interface PoolDisplay {
+  label: string;
+  range: string;
+  pct: string;
+  multiplier: string;
+  color: string;
+}
 export default function LandingPage() {
   const { login, authenticated } = usePrivy();
   const router = useRouter();
@@ -48,7 +54,7 @@ router.push('/dashboard');
     enabled: !!liveMarket?.id,
     refetchInterval: 15_000,
   });
-  const pools = livePools?.length ? livePools.map((p: any, i: number) => ({
+  const pools: PoolDisplay[] = livePools?.length ? livePools.map((p: any, i: number) => ({
     label: p.label,
     range: p.range,
     pct: `${p.participationPct}%`,
@@ -212,7 +218,7 @@ router.push('/dashboard');
 
       {/* Pool Example */}
       <section className="max-w-6xl mx-auto px-6 py-24">
-                <h2 className="text-3xl font-bold text-center mb-4">
+        <h2 className="text-3xl font-bold text-center mb-4">
           {"Today's Market"}
         </h2>
         <p className="text-gray-500 text-center mb-12">

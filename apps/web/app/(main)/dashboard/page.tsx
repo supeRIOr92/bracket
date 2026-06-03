@@ -388,6 +388,7 @@ Share your win
 </button>
 ) : stats && (
 <ShareCard
+mode="bet"
 username={userProfile?.username || formatAddress(walletAddress || '')}
 poolId={claimStatus?.poolId ?? 3}
 poolLabel={['A','B','C','D','E'][(claimStatus?.poolId ?? 3) - 1]}
@@ -563,6 +564,7 @@ View on Basescan ↗
 {showShareCard && stats ? (
 <div className="mb-4">
 <ShareCard
+mode="bet"
 username={userProfile?.username || formatAddress(walletAddress || '')}
 poolId={selectedPool ?? 1}
 poolLabel={['A','B','C','D','E'][(selectedPool ?? 1) - 1]}
@@ -587,7 +589,6 @@ className="w-full bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-
 Done
 </button>
 </div>
-
             ) : (
               <>
                 <div className="flex items-center justify-between mb-5">
