@@ -43,7 +43,7 @@ export const predictionsApi = {
 export const usersApi = {
   getProfile: (id: string) => api.get(`/api/users/${id}`),
   getProfileByAddress: (address: string) => api.get(`/api/users/address/${address}`),
-  updateProfile: (data: { username?: string; bio?: string }) =>
+  updateProfile: (data: { username?: string; bio?: string; avatarUrl?: string }) =>
     api.put('/api/users/me', data),
   follow: (id: string) => api.post(`/api/users/${id}/follow`),
   unfollow: (id: string) => api.delete(`/api/users/${id}/follow`),
