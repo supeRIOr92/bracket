@@ -67,7 +67,7 @@ export function Footer() {
         {/* Bottom bar */}
         <div className="border-t border-gray-100 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p className="text-xs text-gray-400">© 2026 Bracket. All rights reserved.</p>
-          <pclassName="text-xs text-gray-400 text-center">
+          <p className="text-xs text-gray-400 text-center">
             Not financial advice. Prediction markets carry risk. Participate responsibly.
           </p>
         </div>
