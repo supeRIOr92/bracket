@@ -354,7 +354,44 @@ return(
 
       {/* RIGHT — live panels */}
       <div className="space-y-6">
-        <LiveActivity marketId={id} />
+        {/* Crowd Sentiment */}
+          {pools && pools.length > 0 && (() => {
+            const totalStake = pools.reduce((sum: number, p: any) => sum + parseFloat(p.total_stake || '0'), 0);
+            const POOL_LABELS = ['A', 'B', 'C', 'D', 'E'];
+            const BAR_COLORS = ['bg-blue-400', 'bg-sky-400', 'bg-indigo-400', 'bg-violet-400', 'bg-purple-400'];
+          return (
+            <div className="bg-white rounded-2xl border border-gray-100 p-6">
+              <h3 className="font-semibold text-gray-900 mb-1">Crowd Sentiment</h3>
+                <p className="text-xs text-gray-400 mb-4">Distribution of stakes across pools</p>
+            <div className="space-y-3">
+            {pools.map((pool: any, i: number) => {
+              const stake = parseFloat(pool.total_stake || '0');
+              const pct = totalStake > 0 ? Math.round((stake / totalStake) * 100) : 0;
+              const multiplier = pool.estimatedMultiplier || pool.estimated_multiplier || '—';
+            return (
+            <div key={pool.id} className="flex items-center gap-3">
+              <span className="text-xs font-bold text-gray-500 w-6">
+            {POOL_LABELS[i]}
+              </span>
+                <div className="flex-1 bg-gray-100 rounded-full h-2.5">
+                  <div
+                    className={`h-2.5 rounded-full transition-all duration-500 ${BAR_COLORS[i]}`}
+                    style={{ width: `${pct}%` }}
+                  />
+          </div>
+                <span className="text-xs text-gray-500 w-8 text-right">{pct}%</span>
+                  <span className="text-xs font-semibold text-gray-700 w-10 text-right">
+                  {multiplier !== '—' ? `${multiplier}x` : '—'}
+                </span>
+          </div>
+                  );
+                })}
+              </div>
+            </div>
+            );
+          })()}
+
+          <LiveActivity marketId={id} />
         <LiveComments marketId={id} token={token} />
       </div>
 

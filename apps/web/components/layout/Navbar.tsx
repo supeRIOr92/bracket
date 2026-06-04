@@ -5,6 +5,7 @@ import { usePrivy } from '@privy-io/react-auth';
 import { TrendingUp, Trophy, User, LogOut, Settings } from 'lucide-react';
 import { formatAddress } from '@/lib/utils';
 import BtcTicker from '@/components/ui/BtcTicker';
+import NotificationCenter from '@/components/ui/NotificationCenter';
 
 export function Navbar() {
   const { authenticated, user, logout } = usePrivy();
@@ -57,10 +58,11 @@ export function Navbar() {
                 {link.label}
               </Link>
             ))}
+            <NotificationCenter />
             <button
-              onClick={logout}
-              className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-red-500 transition-colors"
-            >
+                onClick={logout}
+                className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-red-500 transition-colors"
+                >
               <LogOut className="w-4 h-4" />
             </button>
           </div>

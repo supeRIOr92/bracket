@@ -16,8 +16,16 @@ const CATEGORIES = [
 { key: 'contrarian', label: 'Contrarian', icon: Trophy },
 ];
 
+const PERIODS = [
+{ key: 'all', label: 'All Time' },
+{ key: 'season', label: 'Season' },
+{ key: 'weekly', label: 'Weekly' },
+{ key: 'daily', label: 'Daily' },
+];
+
 export default function LeaderboardPage() {
 const [category, setCategory] = useState('pr_score');
+const [period, setPeriod] = useState('all');
 
 const { wallets } = useWallets();
 const walletAddress = wallets[0]?.address?.toLowerCase();
@@ -48,6 +56,7 @@ return (
 </div>
 
 {/* Category Tabs */}
+<div className="flex flex-wrap gap-3 items-center justify-between">
 <div className="flex gap-2 bg-gray-100 p-1 rounded-xl w-fit">
 {CATEGORIES.map((cat) => (
 <button
@@ -63,6 +72,23 @@ category === cat.key
 {cat.label}
 </button>
 ))}
+</div>
+
+<div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
+{PERIODS.map((p) => (
+<button
+key={p.key}
+onClick={() => setPeriod(p.key)}
+className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+period === p.key
+? 'bg-white text-gray-900 shadow-sm'
+: 'text-gray-500 hover:text-gray-700'
+}`}
+>
+{p.label}
+</button>
+))}
+</div>
 </div>
 
 {/* Table */}
