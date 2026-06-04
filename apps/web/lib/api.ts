@@ -48,7 +48,7 @@ api.put('/api/users/me', data),
 follow: (id: string) => api.post(`/api/users/${id}/follow`),
 unfollow: (id: string) => api.delete(`/api/users/${id}/follow`),
 getLeaderboard: (category = 'pr_score') =>
-api.get(`/api/leaderboard?category=${category}`),
+api.get(`/api/users/leaderboard?category=${category}`),
 };
 
 // Auth
