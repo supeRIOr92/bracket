@@ -220,18 +220,18 @@ export class MarketsService {
   // ─── Volatile Range Engine ────────────────────────────────────────────────
 
   private async fetchBinanceKlines(interval: string, limit: number): Promise<number[]> {
-    const url = `https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=${interval}&limit=${limit}`;
-    const res = await fetch(url);
-    if (!res.ok) throw new Error(`Binance API error: ${res.status}`);
+    const days = limit <= 7 ? 7 : limit <= 30 ? 30 : 90;
+    const res = await fetch(`https://api.coingecko.com/api/v3/coins/bitcoin/ohlc?vs_currency=usd&days=${days}`);
+    if (!res.ok) throw new Error(`CoinGecko OHLC error: ${res.status}`);
     const data: any[] = await res.json();
-    return data.map((c) => parseFloat(c[4]));
+    return data.slice(-limit).map((c) => c[4]);
   }
 
   async fetchCurrentBtcPrice(): Promise<number> {
-    const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT');
+    const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');
     if (!res.ok) throw new Error('Failed to fetch BTC price');
     const data: any = await res.json();
-    return parseFloat(data.price);
+    return data.bitcoin.usd;
   }
 
   private calcRealizedVol(closes: number[]): number {
@@ -247,19 +247,21 @@ export class MarketsService {
 
   private async calcAtrPct(btcPrice: number): Promise<number> {
     try {
-      const res = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=25');
-      if (!res.ok) return 0.015;
+    const res = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin/ohlc?vs_currency=usd&days=2');
+    if (!res.ok) return 0.015;
       const data: any[] = await res.json();
-      let atrSum = 0;
-      for (let i = 1; i < data.length; i++) {
-        const high = parseFloat(data[i][2]);
-        const low = parseFloat(data[i][3]);
-        const prevClose = parseFloat(data[i - 1][4]);
+        if (data.length < 2) return 0.015;
+        let atrSum = 0;
+        for (let i = 1; i < data.length; i++) {
+        const high = data[i][2];
+        const low = data[i][3];
+        const prevClose = data[i - 1][4];
         const tr = Math.max(high - low, Math.abs(high - prevClose), Math.abs(low - prevClose));
         atrSum += tr;
-      }
-      return (atrSum / (data.length - 1)) / btcPrice;
-    } catch {
+        }
+        const price = btcPrice || data[data.length - 1][4];
+        return (atrSum / (data.length - 1)) / price;
+      } catch {
       return 0.015;
     }
   }
