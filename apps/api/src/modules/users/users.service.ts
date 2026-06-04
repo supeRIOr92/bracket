@@ -77,7 +77,7 @@ export class UsersService {
   }
 
   async getLeaderboard(
-    category: 'pr_score' | 'win_rate' | 'streak' | 'contrarian' = 'pr_score',
+    category: 'pr_score' | 'win_rate' | 'streak' | 'contrarian' | 'roi' = 'pr_score',
     limit = 50,
   ) {
     const db = this.supabase.getClient();
@@ -86,6 +86,7 @@ export class UsersService {
     if (category === 'win_rate') orderColumn = 'win_rate';
     if (category === 'streak') orderColumn = 'best_streak';
     if (category === 'contrarian') orderColumn = 'contrarian_win_rate';
+    if (category === 'roi') orderColumn = 'roi';
 
     const { data, error } = await db
       .from('leaderboard')

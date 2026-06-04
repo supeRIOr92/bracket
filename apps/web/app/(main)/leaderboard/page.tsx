@@ -14,6 +14,7 @@ const CATEGORIES = [
 { key: 'win_rate', label: 'Win Rate', icon: Target },
 { key: 'streak', label: 'Streak', icon: Zap },
 { key: 'contrarian', label: 'Contrarian', icon: Trophy },
+{ key: 'roi', label: 'ROI', icon: TrendingUp },
 ];
 
 const PERIODS = [
@@ -147,6 +148,11 @@ index === 2 ? 'text-amber-600' :
 {user.contrarian_win_rate}%
 </p>
 )}
+{category === 'roi' && (
+<p className="font-bold text-blue-600">
+{user.roi > 0 ? '+' : ''}{user.roi}%
+</p>
+)}
 </div>
 </div>
 ))}
@@ -179,13 +185,17 @@ index === 2 ? 'text-amber-600' :
 : '0.0'}%
 </p>
 )}
-{category === 'streak' && (
-<p className="font-bold text-blue-600">{myRank.user_stats.best_streak} days</p>
-)}
 {category === 'contrarian' && (
 <p className="font-bold text-blue-600">
 {myRank.user_stats.contrarian_attempts > 0
 ? ((myRank.user_stats.contrarian_wins / myRank.user_stats.contrarian_attempts) * 100).toFixed(1)
+: '0.0'}%
+</p>
+)}
+{category === 'roi' && (
+<p className="font-bold text-blue-600">
+{myRank.user_stats.total_wagered > 0
+? (((myRank.user_stats.total_payout - myRank.user_stats.total_wagered) / myRank.user_stats.total_wagered) * 100).toFixed(1)
 : '0.0'}%
 </p>
 )}

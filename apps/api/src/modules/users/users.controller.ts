@@ -48,7 +48,7 @@ export class UsersController {
   @Get('leaderboard')
   @ApiOperation({ summary: 'Leaderboard global' })
   getLeaderboard(
-    @Query('category') category: 'pr_score' | 'win_rate' | 'streak' | 'contrarian' = 'pr_score',
+    @Query('category') category: 'pr_score' | 'win_rate' | 'streak' | 'contrarian' | 'roi' = 'pr_score',
     @Query('limit') limit = 50,
   ) {
     return this.usersService.getLeaderboard(category, +limit);
