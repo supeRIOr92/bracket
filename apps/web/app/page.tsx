@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowRight, TrendingUp, Users, Zap, Shield } from 'lucide-react';
+import { Footer } from '@/components/layout/Footer';
 interface PoolDisplay {
   label: string;
   range: string;
@@ -263,15 +264,7 @@ router.push('/dashboard');
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-gray-100 py-8">
-        <div className="max-w-6xl mx-auto px-6 flex items-center justify-between">
-          <span className="font-bold text-blue-600">BRACKET</span>
-          <p className="text-gray-400 text-sm">
-            Built on Base. Powered by Chainlink.
-          </p>
-        </div>
-      </footer>
+            <Footer />
 
     </div>
   );
