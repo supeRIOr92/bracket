@@ -46,7 +46,7 @@ router.push('/dashboard');
     queryKey: ['landing-leaderboard'],
     queryFn: async () => {
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/leaderboard?category=pr_score&limit=5`);
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/users/leaderboard?category=pr_score&limit=5`);
         if (!res.ok) return [];
         return res.json();
       } catch { return []; }
