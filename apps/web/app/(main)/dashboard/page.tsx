@@ -90,8 +90,12 @@ export default function DashboardPage() {
   const [showWinShareCard, setShowWinShareCard] = useState(false);
 
   useEffect(() => {
-    const t = localStorage.getItem('bracket_token');
-    setToken(t);
+  const t = localStorage.getItem('bracket_token');
+  setToken(t);
+
+  const onStorage = () => setToken(localStorage.getItem('bracket_token'));
+    window.addEventListener('storage', onStorage);
+  return () => window.removeEventListener('storage', onStorage);
   }, []);
 
   // Fetch user profile for stats
@@ -253,9 +257,10 @@ setShowShareCard(false);
     );
   }
 
-  const closeTime = new Date(market.close_at).toLocaleTimeString('en-US', {
-    hour: '2-digit', minute: '2-digit', timeZone: 'UTC',
-  });
+  const closeTimeRaw = market.close_at ? new Date(market.close_at) : null;
+  const closeTime = closeTimeRaw && !isNaN(closeTimeRaw.getTime())
+    ? closeTimeRaw.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'UTC' })
+    : '—';
 
   const defaultPools = [
     { id: 1, label: 'A', range: `< $${market.pool_a_upper}`, stake: market.pool_a_stake, participationPct: market.pool_a_pct, estimatedMultiplier: '—' },

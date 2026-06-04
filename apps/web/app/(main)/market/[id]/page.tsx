@@ -61,7 +61,11 @@ export default function MarketPage() {
   const [token, setToken] = useState<string | null>(null);
 
   useEffect(() => {
-    setToken(localStorage.getItem('bracket_token'));
+  setToken(localStorage.getItem('bracket_token'));
+
+  const onStorage = () => setToken(localStorage.getItem('bracket_token'));
+  window.addEventListener('storage', onStorage);
+  return () => window.removeEventListener('storage', onStorage);
   }, []);
 
   const { data: market, isLoading } = useMarket(id);
