@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ScheduleModule } from '@nestjs/schedule';
 import configuration from './config/configuration';
 import { MarketsModule } from './modules/markets/markets.module';
 import { PredictionsModule } from './modules/predictions/predictions.module';
@@ -13,6 +14,7 @@ import { ChatModule } from './modules/chat/chat.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, load: [configuration] }),
+    ScheduleModule.forRoot(),
     AuthModule,
     UsersModule,
     MarketsModule,

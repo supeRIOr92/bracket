@@ -187,6 +187,13 @@ export class SettlementService {
       if (!isRefund && winningPool) {
         await this.updatePredictions(market.id, winningPool, parseFloat(market.total_stake));
         await this.xp.processMarketSettlement(market.id);
+
+        // Update jackpot_fee_collected — 1.5% dari total stake
+        const jackpotFee = parseFloat(market.total_stake) * 0.015;
+        await db
+          .from('markets')
+          .update({ jackpot_fee_collected: jackpotFee.toFixed(6) })
+          .eq('id', market.id);
       } else if (isRefund) {
         await this.markPredictionsAsRefund(market.id);
       }

@@ -32,11 +32,11 @@ export const predictionsApi = {
     stakeAmount: number;
     txHash: string;
   }) => api.post('/api/predictions', data),
-  getHistory: (userId: string) => api.get(`/api/predictions/user/${userId}`),
+  getHistory: () => api.get('/api/predictions/me'),
   getClaimStatus: (marketId: string) =>
-    api.get(`/api/predictions/${marketId}/claim-status`),
+    api.get(`/api/predictions/claim-status/${marketId}`),
   recordClaim: (marketId: string, txHash: string) =>
-    api.post(`/api/predictions/${marketId}/claim`, { txHash }),
+    api.post('/api/predictions/claim', { marketId, txHash }),
 };
 
 // Users
@@ -44,7 +44,7 @@ export const usersApi = {
   getProfile: (id: string) => api.get(`/api/users/${id}`),
   getProfileByAddress: (address: string) => api.get(`/api/users/address/${address}`),
   updateProfile: (data: { username?: string; bio?: string }) =>
-    api.patch('/api/users/me', data),
+    api.put('/api/users/me', data),
   follow: (id: string) => api.post(`/api/users/${id}/follow`),
   unfollow: (id: string) => api.delete(`/api/users/${id}/follow`),
   getLeaderboard: (category = 'pr_score') =>

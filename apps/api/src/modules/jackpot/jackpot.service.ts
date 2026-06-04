@@ -153,8 +153,21 @@ export class JackpotService {
       return;
     }
 
-    // Hitung prize per kategori (simplified — gunakan persentase dari pool kecil)
-    const basePrize = 100; // USDC — akan diganti dengan actual treasury balance
+    // Ambil total jackpot dari fee yang terkumpul
+    const { data: feeData } = await db
+      .from('markets')
+      .select('jackpot_fee_collected')
+      .eq('status', 'settled');
+
+    const basePrize = (feeData || []).reduce(
+      (sum, m) => sum + parseFloat(m.jackpot_fee_collected || '0'),
+      0,
+    );
+
+    if (basePrize <= 0) {
+      this.logger.log('Jackpot pool is empty — skipping draw');
+      return;
+    }
 
     await this.drawCategory('community', eligibleUsers.map((u) => u.user_id), basePrize * 0.5, currentSeason);
     await this.drawSkillJackpot(basePrize * 0.25, currentSeason);
