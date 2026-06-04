@@ -265,9 +265,10 @@ export class SettlementService {
   }
 
   /**
-   * Generate range bounds berdasarkan BTC price saat ini.
-   * Simple implementation — target distribusi A=10%, B=20%, C=40%, D=20%, E=10%.
-   * Bounds dalam Chainlink 8-decimal format.
+   * Generate range bounds menggunakan Volatility-Adaptive Probability Range.
+   * Input: BTC price (Chainlink) + 7D/30D Realized Vol + 24H ATR (Binance)
+   * Target distribusi: Pool A=10%, B=20%, C=40%, D=20%, E=10%
+   * Fallback ke flat 3% kalau Binance tidak tersedia.
    */
   private async generateRangeBounds(): Promise<bigint[]> {
     // Ambil harga BTC dari Chainlink
@@ -284,10 +285,74 @@ export class SettlementService {
     const [, price] = await feed.latestRoundData();
     const btcPrice = Number(ethers.formatUnits(price, 8));
 
-    // Daily expected move: gunakan 3% sebagai baseline
-    const dailyMove = btcPrice * 0.03;
+    let dailyMove = btcPrice * 0.03; // fallback flat 3%
 
-    // Pool boundaries
+    try {
+      // Ambil 30 hari OHLCV dari Binance public API (no API key required)
+      const url = 'https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=31';
+      const response = await fetch(url);
+      const candles = await response.json() as any[];
+
+      if (candles && candles.length >= 8) {
+        // Hitung daily returns untuk realized volatility
+        const closes: number[] = candles.map((c: any) => parseFloat(c[4]));
+        const highs: number[] = candles.map((c: any) => parseFloat(c[2]));
+        const lows: number[] = candles.map((c: any) => parseFloat(c[3]));
+
+        const dailyReturns: number[] = [];
+        for (let i = 1; i < closes.length; i++) {
+          dailyReturns.push(Math.log(closes[i] / closes[i - 1]));
+        }
+
+        // 7D Realized Volatility (annualized → daily)
+        const returns7d = dailyReturns.slice(-7);
+        const mean7d = returns7d.reduce((a, b) => a + b, 0) / returns7d.length;
+        const variance7d = returns7d.reduce((a, b) => a + Math.pow(b - mean7d, 2), 0) / returns7d.length;
+        const vol7d = Math.sqrt(variance7d); // daily vol
+
+        // 30D Realized Volatility
+        const returns30d = dailyReturns.slice(-30);
+        const mean30d = returns30d.reduce((a, b) => a + b, 0) / returns30d.length;
+        const variance30d = returns30d.reduce((a, b) => a + Math.pow(b - mean30d, 2), 0) / returns30d.length;
+        const vol30d = Math.sqrt(variance30d); // daily vol
+
+        // 24H ATR (Average True Range) — pakai 14 hari terakhir
+        const atrValues: number[] = [];
+        for (let i = 1; i < Math.min(candles.length, 15); i++) {
+          const high = highs[highs.length - i];
+          const low = lows[lows.length - i];
+          const prevClose = closes[closes.length - i - 1];
+          const tr = Math.max(high - low, Math.abs(high - prevClose), Math.abs(low - prevClose));
+          atrValues.push(tr);
+        }
+        const atr = atrValues.reduce((a, b) => a + b, 0) / atrValues.length;
+        const atrPct = atr / btcPrice; // ATR sebagai % dari harga
+
+        // Gabungkan: weighted average vol
+        // 7D vol lebih relevan untuk next-day prediction (weight 50%)
+        // 30D vol sebagai anchor (weight 30%)
+        // ATR % sebagai floor (weight 20%)
+        const blendedVol = (vol7d * 0.50) + (vol30d * 0.30) + (atrPct * 0.20);
+
+        // Expected daily move = blended vol (sudah dalam daily terms)
+        // Minimum 1.5%, maximum 8% untuk hindari extreme ranges
+        const expectedMove = Math.max(0.015, Math.min(0.08, blendedVol));
+        dailyMove = btcPrice * expectedMove;
+
+        this.logger.log(
+          `Range Engine: vol7d=${(vol7d * 100).toFixed(2)}%, vol30d=${(vol30d * 100).toFixed(2)}%, ` +
+          `atr=${(atrPct * 100).toFixed(2)}%, blended=${(blendedVol * 100).toFixed(2)}%, ` +
+          `dailyMove=$${dailyMove.toFixed(0)}`
+        );
+      }
+    } catch (err) {
+      this.logger.warn('Binance API unavailable, falling back to flat 3% range:', err);
+    }
+
+    // Pool boundaries — target distribusi 10-20-40-20-10%
+    // Pool C (tengah, ~40%) = [price - 0.5x move, price + 0.5x move]
+    // Pool B/D (~20%) = [price - 1.5x, price - 0.5x] dan [price + 0.5x, price + 1.5x]
+    // Pool A/E (~10%) = di luar itu
     const poolA = Math.round((btcPrice - dailyMove * 1.5) * 1e8);
     const poolB = Math.round((btcPrice - dailyMove * 0.5) * 1e8);
     const poolC = Math.round((btcPrice + dailyMove * 0.5) * 1e8);

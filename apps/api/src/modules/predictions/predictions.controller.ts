@@ -50,6 +50,16 @@ export class PredictionsController {
     return this.predictionsService.getUserPredictions(user.id, +limit, +offset);
   }
 
+  @Get('address/:address')
+  @ApiOperation({ summary: 'Prediction history publik by wallet address' })
+  getPublicPredictions(
+    @Param('address') address: string,
+    @Query('limit') limit = 20,
+    @Query('offset') offset = 0,
+  ) {
+    return this.predictionsService.getPublicPredictions(address, +limit, +offset);
+  }
+
   @Get('claim-status/:marketId')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()

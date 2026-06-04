@@ -109,6 +109,44 @@ export class PredictionsService {
   }
 
   /**
+   * Ambil prediction history publik by wallet address.
+   * Hanya tampilkan prediksi dari market yang sudah settled/closed.
+   */
+  async getPublicPredictions(walletAddress: string, limit = 20, offset = 0) {
+    const db = this.supabase.getClient();
+
+    // Cari user by wallet address
+    const { data: user } = await db
+      .from('users')
+      .select('id')
+      .eq('wallet_address', walletAddress.toLowerCase())
+      .single();
+
+    if (!user) return [];
+
+    const { data, error } = await db
+      .from('predictions')
+      .select(`
+        id,
+        pool_id,
+        stake_amount,
+        payout_amount,
+        is_winner,
+        is_refund,
+        created_at,
+        markets(date, status, winning_pool, settlement_price, pool_a_upper, pool_b_upper, pool_c_upper, pool_d_upper)
+      `)
+      .eq('user_id', user.id)
+      .in('markets.status', ['settled', 'refunded'])
+      .not('markets', 'is', null)
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (error) throw new Error(error.message);
+    return data || [];
+  }
+
+  /**
    * Cek apakah user bisa claim di market ini.
    */
   async getClaimStatus(userId: string, marketId: string) {

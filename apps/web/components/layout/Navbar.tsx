@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { usePrivy } from '@privy-io/react-auth';
-import { TrendingUp, Trophy, User, LogOut } from 'lucide-react';
+import { TrendingUp, Trophy, User, LogOut, Settings } from 'lucide-react';
 import { formatAddress } from '@/lib/utils';
 import BtcTicker from '@/components/ui/BtcTicker';
 
@@ -20,6 +20,11 @@ export function Navbar() {
       href: `/profile/${walletAddress}`,
       label: walletAddress ? formatAddress(walletAddress) : 'Profile',
       icon: User,
+    },
+    {
+      href: '/settings',
+      label: 'Settings',
+      icon: Settings,
     },
   ];
 

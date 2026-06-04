@@ -91,9 +91,12 @@ index === 2 ? 'text-amber-600' :
 #{index + 1}
 </span>
 <div>
-<p className="font-medium text-gray-900">
-{user.username || formatAddress(user.id)}
-</p>
+<a
+  href={`/profile/${user.wallet_address || user.id}`}
+  className="font-medium text-gray-900 hover:text-blue-600 transition-colors"
+>
+  {user.username || formatAddress(user.id)}
+</a>
 <p className="text-xs text-gray-400">
 {getPRLabel(user.pr_score)} · {user.total_predictions} predictions
 </p>
