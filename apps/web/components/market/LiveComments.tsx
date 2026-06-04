@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useRef, useEffect, useState } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { useMarketComments, type Comment } from '@/hooks/useMarketComments';
@@ -93,9 +94,9 @@ export default function LiveComments({ marketId, token }: Props) {
             <Avatar user={c.users} />
             <div className="flex-1 min-w-0">
               <div className="flex items-baseline gap-2">
-                <span className="text-xs font-semibold text-gray-900 truncate">
-                  {c.users.username || shortAddr(c.users.wallet_address)}
-                </span>
+                <Link href={`/profile/${c.users.wallet_address}`} className="text-xs font-semibold text-gray-900 hover:text-blue-600 transition-colors truncate">
+                {c.users.username || shortAddr(c.users.wallet_address)}
+                </Link>
                 <span className="text-xs text-gray-400 flex-shrink-0">
                   {formatDistanceToNow(new Date(c.created_at), { addSuffix: true })}
                 </span>

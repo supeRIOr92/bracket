@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useMarketActivity, type Activity } from '@/hooks/useMarketActivity';
 import { formatDistanceToNow } from 'date-fns';
 import { POOL_COLORS } from '@/lib/constants';
@@ -30,7 +31,10 @@ function ActivityRow({ item, isOpen }: { item: Activity; isOpen: boolean }) {
 
       <div className="flex-1 min-w-0">
         <p className="text-sm text-gray-700 leading-snug">
-          <span className="font-semibold text-gray-900">{name}</span>
+          <Link href={`/profile/${item.users.wallet_address}`} className="font-semibold text-gray-900 hover:text-blue-600 transition-colors">
+          {name}
+          </Link>
+
           {isOpen ? (
             <> placed a prediction</>
           ) : (
