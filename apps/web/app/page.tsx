@@ -4,7 +4,7 @@ import { usePrivy } from '@privy-io/react-auth';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { ArrowRight, TrendingUp, Users, Zap, Shield } from 'lucide-react';
+import { ArrowRight, TrendingUp, Users, Zap, Shield, Trophy } from 'lucide-react';
 import { Footer } from '@/components/layout/Footer';
 interface PoolDisplay {
   label: string;
@@ -31,6 +31,38 @@ router.push('/dashboard');
       login();
     }
   };
+  const { data: jackpot } = useQuery({
+    queryKey: ['landing-jackpot'],
+    queryFn: async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/jackpot/current`);
+        if (!res.ok) return null;
+        return res.json();
+      } catch { return null; }
+    },
+  });
+
+  const { data: leaderboard } = useQuery({
+    queryKey: ['landing-leaderboard'],
+    queryFn: async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/leaderboard?category=pr_score&limit=5`);
+        if (!res.ok) return [];
+        return res.json();
+      } catch { return []; }
+    },
+  });
+
+  const { data: season } = useQuery({
+    queryKey: ['landing-season'],
+    queryFn: async () => {
+      try {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/seasons/current`);
+        if (!res.ok) return null;
+        return res.json();
+      } catch { return null; }
+    },
+  });
 
     const { data: liveMarket } = useQuery({
     queryKey: ['landing-market'],
@@ -245,6 +277,81 @@ router.push('/dashboard');
           ))}
         </div>
       </section>
+
+      {/* Jackpot Banner */}
+      {jackpot && (
+        <section className="bg-gradient-to-r from-blue-600 to-indigo-600 py-12">
+          <div className="max-w-6xl mx-auto px-6 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <Trophy className="w-10 h-10 text-white" />
+              <div>
+                <p className="text-blue-100 text-sm font-medium">Weekly Jackpot</p>
+                <p className="text-white text-3xl font-bold">
+                  {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(parseFloat(jackpot.amount || jackpot.pool_size || '0'))} USDC
+                </p>
+              </div>
+            </div>
+            <p className="text-blue-100 text-sm max-w-xs text-right hidden md:block">
+              Top predictors of the week share the jackpot pool. Keep your streak alive to qualify.
+            </p>
+          </div>
+        </section>
+      )}
+
+      {/* Leaderboard Preview */}
+      <section className="max-w-6xl mx-auto px-6 py-16">
+        <div className="flex items-center justify-between mb-8">
+          <h2 className="text-3xl font-bold">Top Predictors</h2>
+          <a href="/leaderboard" className="text-blue-600 text-sm font-medium hover:underline">View Full Leaderboard →</a>
+        </div>
+        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden">
+          {!leaderboard?.length ? (
+            <p className="text-center text-gray-400 py-12 text-sm">No data yet. Be the first to predict.</p>
+          ) : (
+            <div className="divide-y divide-gray-50">
+              {leaderboard.slice(0, 5).map((user: any, i: number) => (
+                <div key={user.id} className="flex items-center justify-between px-6 py-4">
+                  <div className="flex items-center gap-4">
+                    <span className={`w-8 text-sm font-bold ${i === 0 ? 'text-yellow-500' : i === 1 ? 'text-gray-400' : i === 2 ? 'text-amber-600' : 'text-gray-300'}`}>#{i + 1}</span>
+                    <span className="font-medium text-gray-900">{user.username || `${user.wallet_address?.slice(0, 6)}...`}</span>
+                  </div>
+                  <span className="font-bold text-blue-600">{user.pr_score} PR</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Season Progress */}
+      {season && (
+        <section className="max-w-6xl mx-auto px-6 pb-16">
+          <div className="bg-gray-50 rounded-2xl p-8 border border-gray-100">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-xl font-bold text-gray-900">{season.name || 'Current Season'}</h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  {season.end_date ? `Ends ${new Date(season.end_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}` : 'Season in progress'}
+                </p>
+              </div>
+              {season.end_date && (
+                <span className="text-blue-600 font-bold text-sm">
+                  {Math.max(0, Math.ceil((new Date(season.end_date).getTime() - Date.now()) / 86400000))} days left
+                </span>
+              )}
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2">
+              <div className="bg-blue-600 h-2 rounded-full transition-all" style={{ width: `${(() => {
+                const start = season.start_date ? new Date(season.start_date).getTime() : 0;
+                const end = season.end_date ? new Date(season.end_date).getTime() : 0;
+                const now = Date.now();
+                if (!start || !end || end <= start) return 0;
+                return Math.min(100, Math.max(0, ((now - start) / (end - start)) * 100));
+              })()}%` }} />
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* CTA Bottom */}
       <section className="bg-blue-600 py-24">
