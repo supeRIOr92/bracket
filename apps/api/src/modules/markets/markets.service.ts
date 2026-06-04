@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { Cron } from '@nestjs/schedule';
 import { SupabaseService } from '../../common/supabase/supabase.service';
@@ -6,6 +6,7 @@ import { ethers } from 'ethers';
 
 @Injectable()
 export class MarketsService {
+  private readonly logger = new Logger(MarketsService.name);
   constructor(
     private supabase: SupabaseService,
     private config: ConfigService,
@@ -212,7 +213,123 @@ export class MarketsService {
         })
         .eq('id', marketId);
     } catch (err) {
-      console.error('Failed to sync pool stakes:', err);
+            console.error('Failed to sync pool stakes:', err);
     }
+  }
+
+  // ─── Volatile Range Engine ────────────────────────────────────────────────
+
+  private async fetchBinanceKlines(interval: string, limit: number): Promise<number[]> {
+    const url = `https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=${interval}&limit=${limit}`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`Binance API error: ${res.status}`);
+    const data: any[] = await res.json();
+    return data.map((c) => parseFloat(c[4]));
+  }
+
+  async fetchCurrentBtcPrice(): Promise<number> {
+    const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCUSDT');
+    if (!res.ok) throw new Error('Failed to fetch BTC price');
+    const data: any = await res.json();
+    return parseFloat(data.price);
+  }
+
+  private calcRealizedVol(closes: number[]): number {
+    if (closes.length < 2) return 0.03;
+    const returns: number[] = [];
+    for (let i = 1; i < closes.length; i++) {
+      returns.push(Math.log(closes[i] / closes[i - 1]));
+    }
+    const mean = returns.reduce((a, b) => a + b, 0) / returns.length;
+    const variance = returns.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / (returns.length - 1);
+    return Math.sqrt(variance) * Math.sqrt(365);
+  }
+
+  private async calcAtrPct(btcPrice: number): Promise<number> {
+    try {
+      const res = await fetch('https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1h&limit=25');
+      if (!res.ok) return 0.015;
+      const data: any[] = await res.json();
+      let atrSum = 0;
+      for (let i = 1; i < data.length; i++) {
+        const high = parseFloat(data[i][2]);
+        const low = parseFloat(data[i][3]);
+        const prevClose = parseFloat(data[i - 1][4]);
+        const tr = Math.max(high - low, Math.abs(high - prevClose), Math.abs(low - prevClose));
+        atrSum += tr;
+      }
+      return (atrSum / (data.length - 1)) / btcPrice;
+    } catch {
+      return 0.015;
+    }
+  }
+
+  async calcExpectedMovePct(): Promise<{ movePct: number; btcPrice: number }> {
+    const btcPrice = await this.fetchCurrentBtcPrice();
+    const [closes7d, closes30d, atr] = await Promise.all([
+      this.fetchBinanceKlines('1d', 8).then((c) => c.slice(0, 7)),
+      this.fetchBinanceKlines('1d', 31).then((c) => c.slice(0, 30)),
+      this.calcAtrPct(btcPrice),
+    ]);
+
+    const vol7d = this.calcRealizedVol(closes7d) / Math.sqrt(365);
+    const vol30d = this.calcRealizedVol(closes30d) / Math.sqrt(365);
+    const raw = 0.4 * vol7d + 0.3 * vol30d + 0.3 * atr;
+    const movePct = Math.min(0.05, Math.max(0.005, raw));
+
+    this.logger.log(`vol7d=${(vol7d*100).toFixed(2)}% vol30d=${(vol30d*100).toFixed(2)}% atr=${(atr*100).toFixed(2)}% → move=${(movePct*100).toFixed(2)}%`);
+    return { movePct, btcPrice };
+  }
+
+  generatePoolBoundaries(btcPrice: number, movePct: number) {
+    const step = btcPrice * movePct;
+    const round = (n: number) => Math.round(n / 50) * 50;
+    return {
+      poolAUpper: round(btcPrice - 2 * step),
+      poolBUpper: round(btcPrice - step),
+      poolCUpper: round(btcPrice + step),
+      poolDUpper: round(btcPrice + 2 * step),
+    };
+  }
+
+  @Cron('0 0 * * *', { timeZone: 'UTC' })
+  async createDailyMarket() {
+    this.logger.log('Creating daily market...');
+    try {
+      const { movePct, btcPrice } = await this.calcExpectedMovePct();
+      const bounds = this.generatePoolBoundaries(btcPrice, movePct);
+      const today = new Date().toISOString().split('T')[0];
+
+      const db = this.supabase.getClient();
+      const { data: existing } = await db.from('markets').select('id').eq('date', today).single();
+      if (existing) {
+        this.logger.log(`Market for ${today} already exists, skipping.`);
+        return;
+      }
+
+      const { data, error } = await db.from('markets').insert({
+        asset: 'BTC',
+        date: today,
+        status: 'open',
+        open_at: new Date(`${today}T00:00:00Z`).toISOString(),
+        close_at: new Date(`${today}T23:00:00Z`).toISOString(),
+        settle_at: new Date(`${today}T23:59:00Z`).toISOString(),
+        btc_price_at_open: btcPrice,
+        expected_move_pct: movePct * 100,
+        pool_a_upper: bounds.poolAUpper,
+        pool_b_upper: bounds.poolBUpper,
+        pool_c_upper: bounds.poolCUpper,
+        pool_d_upper: bounds.poolDUpper,
+      }).select().single();
+
+      if (error) throw new Error(error.message);
+      this.logger.log(`Daily market created: ${data.id} | BTC=$${btcPrice} | move=${(movePct*100).toFixed(2)}%`);
+    } catch (err) {
+      this.logger.error('Failed to create daily market:', err);
+    }
+  }
+
+  async createTodayMarketManual() {
+    return this.createDailyMarket();
   }
 }

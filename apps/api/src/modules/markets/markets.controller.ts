@@ -1,4 +1,4 @@
-import { Controller, Get, Param } from '@nestjs/common';
+import { Controller, Get, Post, Param } from '@nestjs/common';
 import { ApiTags, ApiOperation } from '@nestjs/swagger';
 import { MarketsService } from './markets.service';
 
@@ -8,13 +8,13 @@ export class MarketsController {
   constructor(private marketsService: MarketsService) {}
 
   @Get()
-  @ApiOperation({ summary: 'List semua market aktif' })
+  @ApiOperation({ summary: 'Semua market aktif' })
   getActiveMarkets() {
     return this.marketsService.getActiveMarkets();
   }
 
   @Get('today')
-  @ApiOperation({ summary: 'Market aktif hari ini' })
+  @ApiOperation({ summary: 'Market hari ini' })
   getTodayMarket() {
     return this.marketsService.getTodayMarket();
   }
@@ -35,5 +35,11 @@ export class MarketsController {
   @ApiOperation({ summary: 'Daftar pemenang market kemarin' })
   getYesterdayWinners() {
     return this.marketsService.getYesterdayWinners();
+  }
+
+  @Post('create-today')
+  @ApiOperation({ summary: 'Manual trigger: buat market hari ini (testing)' })
+  createTodayMarket() {
+    return this.marketsService.createTodayMarketManual();
   }
 }
