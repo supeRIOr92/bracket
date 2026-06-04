@@ -138,7 +138,7 @@ export default function ProfilePage() {
 
   const { data: predictions } = useQuery({
     queryKey: ['predictions', user?.id],
-    queryFn: async () => (await predictionsApi.getHistory(user.id)).data,
+    queryFn: async () => (await predictionsApi.getHistory()).data,
     enabled: !!user?.id,
   });
 
