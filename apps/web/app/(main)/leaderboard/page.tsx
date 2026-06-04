@@ -7,6 +7,7 @@ import { usersApi } from '@/lib/api';
 import { formatUSDC } from '@/lib/utils';
 import { formatPRScore, getPRLabel, formatAddress } from '@/lib/utils';
 import { Trophy, TrendingUp, Zap, Target } from 'lucide-react';
+import Link from 'next/link';
 
 const CATEGORIES = [
 { key: 'pr_score', label: 'PR Score', icon: TrendingUp },
@@ -95,7 +96,9 @@ index === 2 ? 'text-amber-600' :
   href={`/profile/${user.wallet_address || user.id}`}
   className="font-medium text-gray-900 hover:text-blue-600 transition-colors"
 >
-  {user.username || formatAddress(user.id)}
+<Link href={`/profile/${user.wallet_address}`} className="hover:text-blue-600 transition-colors">
+  {user.username || formatAddress(user.wallet_address)}
+</Link>
 </a>
 <p className="text-xs text-gray-400">
 {getPRLabel(user.pr_score)} · {user.total_predictions} predictions
