@@ -49,13 +49,13 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <a href="mailto:hello@basebracket.xyz"
+                <a href="mailto:basebracket.gg@gmail.com"
                   className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
-                  hello@basebracket.xyz
+                  basebracket.gg@gmail.com
                 </a>
               </li>
               <li>
-                <a href="https://basescan.org/address/CONTRACT_ADDRESS_HERE" target="_blank" rel="noopener noreferrer"
+                <a href="https://basescan.org/address/SOON" target="_blank" rel="noopener noreferrer"
                   className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
                   Smart Contract ↗
                 </a>

@@ -277,7 +277,7 @@ export class SettlementService {
     ];
 
     const feed = new ethers.Contract(
-      this.config.get<string>('blockchain.chainlinkFeed')!,
+      ethers.getAddress(this.config.get<string>('blockchain.chainlinkFeed')!),
       feedAbi,
       this.provider,
     );

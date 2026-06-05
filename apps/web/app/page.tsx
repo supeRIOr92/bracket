@@ -14,14 +14,14 @@ interface PoolDisplay {
   color: string;
 }
 export default function LandingPage() {
-  const { login, authenticated } = usePrivy();
+  const { login, authenticated, ready } = usePrivy();
   const router = useRouter();
 
 useEffect(() => {
-if (authenticated) {
+if (ready && authenticated) {
 router.push('/dashboard');
 }
-}, [authenticated, router]);
+}, [ready, authenticated, router]);
 
 
   const handleCTA = () => {
