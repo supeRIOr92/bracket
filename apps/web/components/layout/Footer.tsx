@@ -43,15 +43,15 @@ export function Footer() {
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Connect</p>
             <ul className="space-y-2">
               <li>
-                <a href="https://twitter.com/BracketPredict" target="_blank" rel="noopener noreferrer"
+                <a href="https://x.com/basebracket" target="_blank" rel="noopener noreferrer"
                   className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
-                  Twitter / X
+                  X
                 </a>
               </li>
               <li>
                 <a href="mailto:basebracket.gg@gmail.com"
                   className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
-                  basebracket.gg@gmail.com
+                  Mail
                 </a>
               </li>
               <li>
