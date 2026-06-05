@@ -468,38 +468,41 @@ date={new Date().toISOString()}
           </span>
         </div>
 
-                {/* Crowd Sentiment Bar */}
-        {(() => {
-          const total = displayPools.reduce((sum: number, p: any) => sum + parseFloat(p.stake || '0'), 0);
-          return total > 0 ? (
-            <div className="mb-5">
-              <div className="flex h-3 rounded-full overflow-hidden gap-px">
-                {displayPools.map((pool: any) => {
-                  const colors = POOL_COLORS[pool.id as keyof typeof POOL_COLORS];
-                  const pct = (parseFloat(pool.stake || '0') / total) * 100;
-                  return pct > 0 ? (
-                    <div
-                      key={pool.id}
-                      className={`${colors.badge} transition-all duration-700`}
-                      style={{ width: `${pct}%` }}
-                      title={`Pool ${pool.label}: ${pct.toFixed(1)}%`}
-                    />
-                  ) : null;
-                })}
-              </div>
-              <div className="flex justify-between mt-1.5">
-                {displayPools.map((pool: any) => {
-                  const pct = total > 0 ? ((parseFloat(pool.stake || '0') / total) * 100).toFixed(0) : '0';
-                  return (
-                    <span key={pool.id} className="text-xs text-gray-400 w-1/5 text-center">
-                      {pool.label} {pct}%
-                    </span>
-                  );
-                })}
-              </div>
-            </div>
-          ) : null;
-        })()}
+{/* Crowd Sentiment Bar */}
+{(() => {
+const total = displayPools.reduce((sum: number, p: any) => sum + parseFloat(p.stake || '0'), 0);
+return (
+<div className="mb-5">
+<div className="flex h-3 rounded-full overflow-hidden gap-px">
+{displayPools.map((pool: any) => {
+const colors = POOL_COLORS[pool.id as keyof typeof POOL_COLORS];
+const pct = total > 0 ? (parseFloat(pool.stake || '0') / total) * 100 : 20;
+return (
+<div
+key={pool.id}
+className={`${colors.badge} transition-all duration-700`}
+style={{ width: `${pct}%` }}
+title={`Pool ${pool.label}: ${total > 0 ? pct.toFixed(1) : '0'}%`}
+/>
+);
+})}
+</div>
+<div className="flex justify-between mt-1.5">
+{displayPools.map((pool: any) => {
+const pct = total > 0 ? ((parseFloat(pool.stake || '0') / total) * 100).toFixed(0) : '0';
+return (
+<span key={pool.id} className="text-xs text-gray-400 w-1/5 text-center">
+{pool.label} {pct}%
+</span>
+);
+})}
+</div>
+{total === 0 && (
+<p className="text-xs text-gray-300 text-center mt-2">No bets yet — be the first</p>
+)}
+</div>
+);
+})()}
 
         <div className="grid grid-cols-5 gap-3">
           {displayPools.map((pool: any) => {
