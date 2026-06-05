@@ -72,6 +72,8 @@ getCurrent: () => api.get('/api/seasons/current'),
 // Notifications
 export const notificationsApi = {
 getAll: () => api.get('/api/notifications'),
+markAllRead: () => api.patch('/api/notifications/read-all'),
+markRead: (id: string) => api.patch(`/api/notifications/${id}/read`),
 };
 
 export default api;

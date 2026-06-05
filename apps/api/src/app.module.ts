@@ -11,6 +11,7 @@ import { SettlementModule } from './modules/settlement/settlement.module';
 import { XpModule } from './modules/xp/xp.module';
 import { ChatModule } from './modules/chat/chat.module';
 import { SeasonsModule } from './modules/seasons/seasons.module';
+import { NotificationsModule } from './modules/notifications/notifications.module';
 
 @Module({
 imports: [
@@ -25,6 +26,7 @@ SettlementModule,
 XpModule,
 ChatModule,
 SeasonsModule,
+NotificationsModule,
 ],
 })
 export class AppModule {}
