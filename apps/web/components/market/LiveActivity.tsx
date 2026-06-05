@@ -81,7 +81,7 @@ export default function LiveActivity({ marketId, isOpen = false }: Props) {
         )}
         {!loading && activity.length === 0 && (
           <p className="text-center text-gray-400 text-sm py-8">
-            Belum ada activity. Be the first to bet! 🎯
+            Be the first to bet! 🎯
           </p>
         )}
         {activity.map((item) => (
