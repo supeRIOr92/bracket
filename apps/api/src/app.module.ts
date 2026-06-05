@@ -10,19 +10,21 @@ import { JackpotModule } from './modules/jackpot/jackpot.module';
 import { SettlementModule } from './modules/settlement/settlement.module';
 import { XpModule } from './modules/xp/xp.module';
 import { ChatModule } from './modules/chat/chat.module';
+import { SeasonsModule } from './modules/seasons/seasons.module';
 
 @Module({
-  imports: [
-    ConfigModule.forRoot({ isGlobal: true, load: [configuration] }),
-    ScheduleModule.forRoot(),
-    AuthModule,
-    UsersModule,
-    MarketsModule,
-    PredictionsModule,
-    JackpotModule,
-    SettlementModule,
-    XpModule,
-    ChatModule,
-  ],
+imports: [
+ConfigModule.forRoot({ isGlobal: true, load: [configuration] }),
+ScheduleModule.forRoot(),
+AuthModule,
+UsersModule,
+MarketsModule,
+PredictionsModule,
+JackpotModule,
+SettlementModule,
+XpModule,
+ChatModule,
+SeasonsModule,
+],
 })
 export class AppModule {}
