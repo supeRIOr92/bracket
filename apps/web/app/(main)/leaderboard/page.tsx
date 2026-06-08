@@ -17,16 +17,8 @@ const CATEGORIES = [
 { key: 'roi', label: 'ROI', icon: TrendingUp },
 ];
 
-const PERIODS = [
-{ key: 'all', label: 'All Time' },
-{ key: 'season', label: 'Season' },
-{ key: 'weekly', label: 'Weekly' },
-{ key: 'daily', label: 'Daily' },
-];
-
 export default function LeaderboardPage() {
 const [category, setCategory] = useState('pr_score');
-const [period, setPeriod] = useState('all');
 
 const { wallets } = useWallets();
 const walletAddress = wallets[0]?.address?.toLowerCase();
@@ -47,7 +39,6 @@ return profile.data;
 },
 enabled: !!walletAddress,
 });
-
 return (
 <div className="space-y-6">
 
@@ -57,7 +48,6 @@ return (
 </div>
 
 {/* Category Tabs */}
-<div className="flex flex-wrap gap-3 items-center justify-between">
 <div className="flex gap-2 bg-gray-100 p-1 rounded-xl w-fit">
 {CATEGORIES.map((cat) => (
 <button
@@ -73,23 +63,6 @@ category === cat.key
 {cat.label}
 </button>
 ))}
-</div>
-
-<div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-fit">
-{PERIODS.map((p) => (
-<button
-key={p.key}
-onClick={() => setPeriod(p.key)}
-className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-period === p.key
-? 'bg-white text-gray-900 shadow-sm'
-: 'text-gray-500 hover:text-gray-700'
-}`}
->
-{p.label}
-</button>
-))}
-</div>
 </div>
 
 {/* Table */}
@@ -119,7 +92,10 @@ index === 2 ? 'text-amber-600' :
 #{index + 1}
 </span>
 <div>
-<Link href={`/profile/${user.wallet_address}`} className="font-medium text-gray-900 hover:text-blue-600 transition-colors">
+<Link
+href={`/profile/${user.wallet_address}`}
+className="font-medium text-gray-900 hover:text-blue-600 transition-colors"
+>
 {user.username || formatAddress(user.wallet_address)}
 </Link>
 <p className="text-xs text-gray-400">
@@ -129,24 +105,16 @@ index === 2 ? 'text-amber-600' :
 </div>
 <div className="text-right">
 {category === 'pr_score' && (
-<p className="font-bold text-blue-600">
-{formatPRScore(user.pr_score)}
-</p>
+<p className="font-bold text-blue-600">{formatPRScore(user.pr_score)}</p>
 )}
 {category === 'win_rate' && (
-<p className="font-bold text-blue-600">
-{user.win_rate}%
-</p>
+<p className="font-bold text-blue-600">{user.win_rate}%</p>
 )}
 {category === 'streak' && (
-<p className="font-bold text-blue-600">
-{user.best_streak} days
-</p>
+<p className="font-bold text-blue-600">{user.best_streak} days</p>
 )}
 {category === 'contrarian' && (
-<p className="font-bold text-blue-600">
-{user.contrarian_win_rate}%
-</p>
+<p className="font-bold text-blue-600">{user.contrarian_win_rate}%</p>
 )}
 {category === 'roi' && (
 <p className="font-bold text-blue-600">
@@ -167,7 +135,7 @@ index === 2 ? 'text-amber-600' :
 <span className="text-blue-600 font-bold text-sm">Your Rank</span>
 <div>
 <p className="font-medium text-gray-900">
-{myRank.username || myRank.wallet_address?.slice(0, 8) + '...'}
+{myRank.username || formatAddress(myRank.wallet_address)}
 </p>
 <p className="text-xs text-gray-400">
 {myRank.user_stats.total_predictions} predictions
@@ -184,6 +152,9 @@ index === 2 ? 'text-amber-600' :
 ? ((myRank.user_stats.total_wins / myRank.user_stats.total_predictions) * 100).toFixed(1)
 : '0.0'}%
 </p>
+)}
+{category === 'streak' && (
+<p className="font-bold text-blue-600">{myRank.user_stats.best_streak} days</p>
 )}
 {category === 'contrarian' && (
 <p className="font-bold text-blue-600">
@@ -206,4 +177,3 @@ index === 2 ? 'text-amber-600' :
 </div>
 );
 }
-
