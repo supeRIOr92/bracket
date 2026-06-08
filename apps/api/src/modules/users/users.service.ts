@@ -1,124 +1,154 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { SupabaseService } from '../../common/supabase/supabase.service';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class UsersService {
-  constructor(private supabase: SupabaseService) {}
+constructor(
+private supabase: SupabaseService,
+private notifications: NotificationsService,
+) {}
 
-  async getProfile(userId: string) {
-    const db = this.supabase.getClient();
+async getProfile(userId: string) {
+const db = this.supabase.getClient();
 
-    const { data, error } = await db
-      .from('users')
-      .select('*, user_stats(*)')
-      .eq('id', userId)
-      .single();
+const { data, error } = await db
+.from('users')
+.select('*, user_stats(*)')
+.eq('id', userId)
+.single();
 
-    if (error || !data) throw new NotFoundException('User not found');
-    return data;
-  }
+if (error || !data) throw new NotFoundException('User not found');
+return data;
+}
 
-  async getProfileByWallet(walletAddress: string, requesterId?: string) {
-    const db = this.supabase.getClient();
+async getProfileByWallet(walletAddress: string, requesterId?: string) {
+const db = this.supabase.getClient();
 
-    const { data, error } = await db
-      .from('users')
-      .select('*, user_stats(*)')
-      .eq('wallet_address', walletAddress.toLowerCase())
-      .single();
+const { data, error } = await db
+.from('users')
+.select('*, user_stats(*)')
+.eq('wallet_address', walletAddress.toLowerCase())
+.single();
 
-    if (error || !data) throw new NotFoundException('User not found');
+if (error || !data) throw new NotFoundException('User not found');
 
-    let isFollowing = false;
-    if (requesterId && requesterId !== data.id) {
-      const { data: followRow } = await db
-        .from('follows')
-        .select('follower_id')
-        .eq('follower_id', requesterId)
-        .eq('following_id', data.id)
-        .maybeSingle();
-      isFollowing = !!followRow;
-    }
+let isFollowing = false;
+if (requesterId && requesterId !== data.id) {
+const { data: followRow } = await db
+.from('follows')
+.select('follower_id')
+.eq('follower_id', requesterId)
+.eq('following_id', data.id)
+.maybeSingle();
+isFollowing = !!followRow;
+}
 
-    return { ...data, isFollowing };
-  }
+return { ...data, isFollowing };
+}
 
-  async updateProfile(
-    userId: string,
-    updates: { username?: string; bio?: string; avatarUrl?: string },
-  ) {
-    const db = this.supabase.getClient();
+async updateProfile(
+userId: string,
+updates: { username?: string; bio?: string; avatarUrl?: string },
+) {
+const db = this.supabase.getClient();
 
-    const { data, error } = await db
-      .from('users')
-      .update({
-        username: updates.username,
-        bio: updates.bio,
-        avatar_url: updates.avatarUrl,
-      })
-      .eq('id', userId)
-      .select()
-      .single();
+const { data, error } = await db
+.from('users')
+.update({
+username: updates.username,
+bio: updates.bio,
+avatar_url: updates.avatarUrl,
+})
+.eq('id', userId)
+.select()
+.single();
 
-    if (error) throw new Error(error.message);
-    return data;
-  }
+if (error) throw new Error(error.message);
+return data;
+}
 
-  async followUser(followerId: string, followingId: string) {
-    if (followerId === followingId) throw new Error('Cannot follow yourself');
+async followUser(followerId: string, followingId: string) {
+if (followerId === followingId) throw new Error('Cannot follow yourself');
 
-    const db = this.supabase.getClient();
-    await db.from('follows').upsert({
-      follower_id: followerId,
-      following_id: followingId,
-    });
+const db = this.supabase.getClient();
 
-    return { success: true };
-  }
+// Cek apakah sudah follow sebelumnya
+const { data: existing } = await db
+.from('follows')
+.select('follower_id')
+.eq('follower_id', followerId)
+.eq('following_id', followingId)
+.maybeSingle();
 
-  async unfollowUser(followerId: string, followingId: string) {
-    const db = this.supabase.getClient();
+await db.from('follows').upsert({
+follower_id: followerId,
+following_id: followingId,
+});
 
-    await db
-      .from('follows')
-      .delete()
-      .eq('follower_id', followerId)
-      .eq('following_id', followingId);
+// Kirim notif hanya kalau belum follow sebelumnya
+if (!existing) {
+// Ambil username follower untuk notif yang informatif
+const { data: follower } = await db
+.from('users')
+.select('username, wallet_address')
+.eq('id', followerId)
+.single();
 
-    return { success: true };
-  }
+const name = follower?.username || follower?.wallet_address?.slice(0, 6) + '...' || 'Someone';
 
-  async getLeaderboard(
-    category: 'pr_score' | 'win_rate' | 'streak' | 'contrarian' | 'roi' = 'pr_score',
-    limit = 50,
-  ) {
-    const db = this.supabase.getClient();
+await this.notifications.createNotification(
+followingId,
+'follow',
+`${name} started following you`,
+);
+}
 
-    let orderColumn = 'pr_score';
-    if (category === 'win_rate') orderColumn = 'win_rate';
-    if (category === 'streak') orderColumn = 'best_streak';
-    if (category === 'contrarian') orderColumn = 'contrarian_win_rate';
-    if (category === 'roi') orderColumn = 'roi';
+return { success: true };
+}
 
-    const { data, error } = await db
-      .from('leaderboard')
-      .select('*')
-      .order(orderColumn, { ascending: false, nullsFirst: false })
-      .limit(limit);
+async unfollowUser(followerId: string, followingId: string) {
+const db = this.supabase.getClient();
 
-    if (error) throw new Error(error.message);
-    return data;
-  }
+await db
+.from('follows')
+.delete()
+.eq('follower_id', followerId)
+.eq('following_id', followingId);
 
-  async getUserRank(userId: string) {
-    const db = this.supabase.getClient();
+return { success: true };
+}
 
-    const { data } = await db
-      .from('leaderboard')
-      .select('global_rank, pr_score')
-      .eq('id', userId)
-      .single();
+async getLeaderboard(
+category: 'pr_score' | 'win_rate' | 'streak' | 'contrarian' | 'roi' = 'pr_score',
+limit = 50,
+) {
+const db = this.supabase.getClient();
 
-    return data;
-  }
+let orderColumn = 'pr_score';
+if (category === 'win_rate') orderColumn = 'win_rate';
+if (category === 'streak') orderColumn = 'best_streak';
+if (category === 'contrarian') orderColumn = 'contrarian_win_rate';
+if (category === 'roi') orderColumn = 'roi';
+
+const { data, error } = await db
+.from('leaderboard')
+.select('*')
+.order(orderColumn, { ascending: false, nullsFirst: false })
+.limit(limit);
+if (error) throw new Error(error.message);
+return data;
+}
+
+async getUserRank(userId: string) {
+const db = this.supabase.getClient();
+
+const { data } = await db
+.from('leaderboard')
+.select('global_rank, pr_score')
+.eq('id', userId)
+.single();
+
+return data;
+}
 }
