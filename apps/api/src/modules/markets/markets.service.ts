@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Cron } from '@nestjs/schedule';
 import { SupabaseService } from '../../common/supabase/supabase.service';
 import { ethers } from 'ethers';
 
