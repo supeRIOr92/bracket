@@ -2,14 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { usePrivy, useWallets } from '@privy-io/react-auth';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 import { usersApi } from '@/lib/api';
 import { User, Save, Camera } from 'lucide-react';
-
-const supabase = createClient(
-process.env.NEXT_PUBLIC_SUPABASE_URL!,
-process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 export default function SettingsPage() {
 const { authenticated } = usePrivy();

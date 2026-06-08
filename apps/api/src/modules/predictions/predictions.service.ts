@@ -172,13 +172,25 @@ export class PredictionsService {
     }
 
     if (market.is_refund) {
-      return { canClaim: true, type: 'refund', amount: prediction.stake_amount };
+      return {
+        canClaim: true,
+        type: 'refund',
+        amount: prediction.stake_amount,
+        stakeAmount: prediction.stake_amount,
+        poolId: prediction.pool_id,
+      };
     }
 
     if (prediction.pool_id !== market.winning_pool) {
       return { canClaim: false, reason: 'Not a winner' };
     }
 
-    return { canClaim: true, type: 'win', amount: prediction.payout_amount };
+    return {
+      canClaim: true,
+      type: 'win',
+      amount: prediction.payout_amount,
+      stakeAmount: prediction.stake_amount,
+      poolId: prediction.pool_id,
+    };
   }
 }

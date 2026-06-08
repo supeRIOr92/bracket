@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 
 export interface Comment {
   id: string;
@@ -11,11 +11,6 @@ export interface Comment {
     avatar_url: string | null;
   };
 }
-
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-);
 
 export function useMarketComments(marketId: string) {
   const [comments, setComments] = useState<Comment[]>([]);

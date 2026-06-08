@@ -1,8 +1,9 @@
-import { Controller, Get, Put, Post, Delete, Param, Body, UseGuards, Query } from '@nestjs/common';
+import { Controller, Get, Put, Post, Delete, Param, Body, UseGuards, Query, Headers } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiProperty } from '@nestjs/swagger';
 import { UsersService } from './users.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
+import { JwtService } from '@nestjs/jwt';
 import { IsOptional, IsString, MaxLength } from 'class-validator';
 
 class UpdateProfileDto {
@@ -27,7 +28,10 @@ class UpdateProfileDto {
 @ApiTags('users')
 @Controller('users')
 export class UsersController {
-  constructor(private usersService: UsersService) {}
+  constructor(
+    private usersService: UsersService,
+    private jwtService: JwtService,
+  ) {}
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
@@ -56,8 +60,19 @@ export class UsersController {
 
   @Get('address/:address')
   @ApiOperation({ summary: 'Get profil user by wallet address' })
-  getProfileByAddress(@Param('address') address: string) {
-    return this.usersService.getProfileByWallet(address);
+  getProfileByAddress(
+    @Param('address') address: string,
+    @Headers('authorization') auth?: string,
+  ) {
+    let requesterId: string | undefined;
+    if (auth?.startsWith('Bearer ')) {
+      try {
+        const token = auth.slice(7);
+        const payload = this.jwtService.decode(token) as any;
+        requesterId = payload?.sub;
+      } catch {}
+    }
+    return this.usersService.getProfileByWallet(address, requesterId);
   }
 
   @Get(':id')

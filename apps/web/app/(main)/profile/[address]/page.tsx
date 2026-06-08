@@ -118,11 +118,21 @@ export default function ProfilePage() {
           {/* Follow button */}
           {authenticated && !isOwnProfile && (
             <button
-              onClick={() => followMutation.mutate()}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium border border-blue-600 text-blue-600 hover:bg-blue-50 transition-colors"
+              onClick={() =>
+                user?.isFollowing ? unfollowMutation.mutate() : followMutation.mutate()
+              }
+              disabled={followMutation.isPending || unfollowMutation.isPending}
+              className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${
+                user?.isFollowing
+                  ? 'border border-gray-300 text-gray-600 hover:bg-red-50 hover:border-red-300 hover:text-red-600'
+                  : 'border border-blue-600 text-blue-600 hover:bg-blue-50'
+              }`}
             >
-              <UserPlus className="w-4 h-4" />
-              Follow
+              {user?.isFollowing ? (
+                <><UserMinus className="w-4 h-4" /> Unfollow</>
+              ) : (
+                <><UserPlus className="w-4 h-4" /> Follow</>
+              )}
             </button>
           )}
         </div>

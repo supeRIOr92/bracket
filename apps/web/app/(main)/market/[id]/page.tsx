@@ -99,11 +99,32 @@ export default function MarketPage() {
       return;
     }
 
+    if (!market.chain_market_id) {
+      setErrorMsg('Market not ready yet. Please try again in a moment.');
+      setStep('error');
+      return;
+    }
+
     try {
       setStep('approving');
       setErrorMsg('');
 
       const provider = await wallet.getEthereumProvider();
+
+      const chainId = await provider.request({ method: 'eth_chainId' }) as string;
+      if (parseInt(chainId, 16) !== 8453) {
+        try {
+          await provider.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: '0x2105' }],
+          });
+        } catch {
+          setErrorMsg('Please switch to Base network in your wallet.');
+          setStep('error');
+          return;
+        }
+      }
+
       const walletClient = createWalletClient({
         chain: base,
         transport: custom(provider),

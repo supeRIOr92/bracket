@@ -18,7 +18,7 @@ export class UsersService {
     return data;
   }
 
-  async getProfileByWallet(walletAddress: string) {
+  async getProfileByWallet(walletAddress: string, requesterId?: string) {
     const db = this.supabase.getClient();
 
     const { data, error } = await db
@@ -28,7 +28,19 @@ export class UsersService {
       .single();
 
     if (error || !data) throw new NotFoundException('User not found');
-    return data;
+
+    let isFollowing = false;
+    if (requesterId && requesterId !== data.id) {
+      const { data: followRow } = await db
+        .from('follows')
+        .select('follower_id')
+        .eq('follower_id', requesterId)
+        .eq('following_id', data.id)
+        .maybeSingle();
+      isFollowing = !!followRow;
+    }
+
+    return { ...data, isFollowing };
   }
 
   async updateProfile(
@@ -91,7 +103,7 @@ export class UsersService {
     const { data, error } = await db
       .from('leaderboard')
       .select('*')
-      .order(orderColumn, { ascending: false })
+      .order(orderColumn, { ascending: false, nullsFirst: false })
       .limit(limit);
 
     if (error) throw new Error(error.message);

@@ -152,15 +152,35 @@ setShowShareCard(false);
     const wallet = wallets[0];
     if (!wallet) { setErrorMsg('No wallet connected'); setStep('error'); return; }
 
+    if (!market.chain_market_id) {
+      setErrorMsg('Market not ready yet. Please try again in a moment.');
+      setStep('error');
+      return;
+    }
+
     try {
       setStep('approving');
       setErrorMsg('');
       const provider = await wallet.getEthereumProvider();
+
+      const chainId = await provider.request({ method: 'eth_chainId' }) as string;
+      if (parseInt(chainId, 16) !== 8453) {
+        try {
+          await provider.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: '0x2105' }],
+          });
+        } catch {
+          setErrorMsg('Please switch to Base network in your wallet.');
+          setStep('error');
+          return;
+        }
+      }
+
       const walletClient = createWalletClient({ chain: base, transport: custom(provider) });
       const publicClient = createPublicClient({ chain: base, transport: http() });
       const address = wallet.address as `0x${string}`;
       const amountInUnits = parseUnits(amount, 6);
-
       const allowance = await publicClient.readContract({
         address: USDC_ADDRESS as `0x${string}`,
         abi: USDC_ABI,
@@ -210,14 +230,34 @@ setShowShareCard(false);
     const wallet = wallets[0];
     if (!wallet) { setClaimError('No wallet connected'); setClaimStep('error'); return; }
 
+    if (!market.chain_market_id) {
+      setClaimError('Market data unavailable. Please refresh.');
+      setClaimStep('error');
+      return;
+    }
+
     try {
       setClaimStep('claiming');
       setClaimError('');
       const provider = await wallet.getEthereumProvider();
+
+      const chainId = await provider.request({ method: 'eth_chainId' }) as string;
+      if (parseInt(chainId, 16) !== 8453) {
+        try {
+          await provider.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: '0x2105' }],
+          });
+        } catch {
+          setClaimError('Please switch to Base network in your wallet.');
+          setClaimStep('error');
+          return;
+        }
+      }
+
       const walletClient = createWalletClient({ chain: base, transport: custom(provider) });
       const publicClient = createPublicClient({ chain: base, transport: http() });
       const address = wallet.address as `0x${string}`;
-
       const claimTx = await walletClient.writeContract({
         address: CONTRACT_ADDRESS,
         abi: MARKET_ABI,
