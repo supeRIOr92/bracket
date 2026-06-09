@@ -159,20 +159,20 @@ export default function ProfilePage() {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl">
-        {TABS.map((tab) => (
-          <button
-            key={tab}
+      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl overflow-x-auto">
+      {TABS.map((tab) => (
+        <button
+          key={tab}
             onClick={() => setActiveTab(tab)}
-            className={`flex-1 py-2 text-sm font-medium rounded-lg transition-colors ${
-              activeTab === tab
+            className={`flex-1 py-2 px-3 text-sm font-medium rounded-lg transition-colors whitespace-nowrap min-w-fit ${
+            activeTab === tab
                 ? 'bg-white text-gray-900 shadow-sm'
                 : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
+                }`}
+            >
+          {tab}
+        </button>
+      ))}
       </div>
 
       {/* Tab Content */}

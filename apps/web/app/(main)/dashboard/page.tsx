@@ -340,7 +340,7 @@ setShowShareCard(false);
       {/* User Stats Bar */}
       {stats && (
         <div className="bg-white rounded-2xl border border-gray-100 p-4">
-          <div className="grid grid-cols-4 gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center">
                 <TrendingUp className="w-4 h-4 text-blue-600" />
@@ -455,13 +455,13 @@ date={new Date().toISOString()}
           <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
             <TrendingUp className="w-4 h-4" />Total Pool
           </div>
-          <p className="text-2xl font-bold text-gray-900">{formatUSDC(parseFloat(market.total_stake || '0'))}</p>
+          <p className="text-lg sm:text-2xl font-bold text-gray-900">{formatUSDC(parseFloat(market.total_stake || '0'))}</p>
         </div>
         <div className="bg-white rounded-xl border border-gray-100 p-5">
           <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
             <Users className="w-4 h-4" />Participants
           </div>
-          <p className="text-2xl font-bold text-gray-900">—</p>
+          <p className="text-lg sm:text-2xl font-bold text-gray-900">—</p>
         </div>
         <div className="bg-white rounded-xl border border-gray-100 p-5">
           <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
@@ -544,7 +544,7 @@ return (
 );
 })()}
 
-        <div className="grid grid-cols-5 gap-3">
+        <div className="flex gap-3 overflow-x-auto pb-2 sm:grid sm:grid-cols-5 sm:overflow-visible sm:pb-0">
           {displayPools.map((pool: any) => {
             const colors = POOL_COLORS[pool.id as keyof typeof POOL_COLORS];
             const pct = parseFloat(pool.participationPct || '0');
@@ -555,10 +555,11 @@ return (
                 key={pool.id}
                 disabled={!isOpen}
                 onClick={() => handleSelectPool(pool.id)}
-                className={`border-2 rounded-xl p-4 text-left flex flex-col gap-2 transition-all
+                className={`border-2 rounded-xl p-4 text-left flex flex-col gap-2 transition-all min-w-[130px] sm:min-w-0
                   ${colors.border} ${colors.bg}
                   ${isOpen ? 'hover:ring-2 hover:ring-blue-400 hover:ring-offset-1 cursor-pointer' : 'cursor-default opacity-70'}
                 `}
+
               >
                 <div className="flex items-center justify-between">
                   <span className={`font-bold text-sm ${colors.text}`}>{pool.label}</span>

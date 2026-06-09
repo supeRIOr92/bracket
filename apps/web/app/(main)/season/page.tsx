@@ -63,16 +63,16 @@ export default function SeasonPage() {
           <Trophy className="w-5 h-5" />
           Season Rewards
         </h2>
-        <div className="grid grid-cols-3 gap-4">
-          {[
-            { rank: '#1', reward: 'Jackpot share + Legend badge + Season NFT' },
-            { rank: '#2', reward: 'Jackpot share + Expert badge' },
-            { rank: '#3', reward: 'Jackpot share + Advanced badge' },
-          ].map((item) => (
-            <div key={item.rank} className="bg-white/10 rounded-xl p-4">
-              <p className="text-xl font-bold mb-1">{item.rank}</p>
-              <p className="text-blue-100 text-xs leading-snug">{item.reward}</p>
-            </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        {[
+            { rank: '#1', reward: 'Jackpot + Legend badge' },
+            { rank: '#2', reward: 'Jackpot + Expert badge' },
+            { rank: '#3', reward: 'Jackpot + Advanced badge' },
+            ].map((item) => (
+        <div key={item.rank} className="bg-white/10 rounded-xl p-3 flex sm:flex-col items-center sm:items-start gap-3 sm:gap-1">
+        <p className="text-xl font-bold shrink-0">{item.rank}</p>
+        <p className="text-blue-100 text-xs leading-snug">{item.reward}</p>
+        </div>
           ))}
         </div>
         <p className="text-blue-200 text-xs mt-4">
