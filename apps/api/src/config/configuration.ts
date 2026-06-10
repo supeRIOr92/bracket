@@ -30,4 +30,7 @@ export default () => ({
     url: process.env.REDIS_URL!,
     token: process.env.REDIS_TOKEN!,
   },
+  coingecko: {
+    apiKey: process.env.COINGECKO_API_KEY,
+  },
 });

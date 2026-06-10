@@ -221,14 +221,18 @@ export class MarketsService {
 
   private async fetchBinanceKlines(interval: string, limit: number): Promise<number[]> {
     const days = limit <= 7 ? 7 : limit <= 30 ? 30 : 90;
-    const res = await fetch(`https://api.coingecko.com/api/v3/coins/bitcoin/ohlc?vs_currency=usd&days=${days}`);
+    const apiKey = this.config.get<string>('coingecko.apiKey');
+    const headers: Record<string, string> = apiKey ? { 'x-cg-demo-api-key': apiKey } : {};
+    const res = await fetch(`https://api.coingecko.com/api/v3/coins/bitcoin/ohlc?vs_currency=usd&days=${days}`, { headers });
     if (!res.ok) throw new Error(`CoinGecko OHLC error: ${res.status}`);
     const data: any[] = await res.json();
     return data.slice(-limit).map((c) => c[4]);
   }
 
   async fetchCurrentBtcPrice(): Promise<number> {
-    const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd');
+    const apiKey = this.config.get<string>('coingecko.apiKey');
+    const headers: Record<string, string> = apiKey ? { 'x-cg-demo-api-key': apiKey } : {};
+    const res = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=usd', { headers });
     if (!res.ok) throw new Error('Failed to fetch BTC price');
     const data: any = await res.json();
     return data.bitcoin.usd;
@@ -247,8 +251,10 @@ export class MarketsService {
 
   private async calcAtrPct(btcPrice: number): Promise<number> {
     try {
-    const res = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin/ohlc?vs_currency=usd&days=2');
-    if (!res.ok) return 0.015;
+    const apiKey = this.config.get<string>('coingecko.apiKey');
+    const headers: Record<string, string> = apiKey ? { 'x-cg-demo-api-key': apiKey } : {};
+    const res = await fetch('https://api.coingecko.com/api/v3/coins/bitcoin/ohlc?vs_currency=usd&days=2', { headers });
+     if (!res.ok) return 0.015;
       const data: any[] = await res.json();
         if (data.length < 2) return 0.015;
         let atrSum = 0;

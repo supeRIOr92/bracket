@@ -72,7 +72,7 @@ export class SettlementService {
    * Auto-create market: jalan setiap hari jam 00:00 UTC.
    * Generate range berdasarkan volatilitas BTC dan buat market baru.
    */
-  @Cron('0 0 * * *', { timeZone: 'UTC' })
+
   async autoCreateMarket() {
     this.logger.log('Running auto-create market cron...');
 
