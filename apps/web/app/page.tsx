@@ -6,6 +6,8 @@ import { useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ArrowRight, TrendingUp, Users, Zap, Shield, Trophy } from 'lucide-react';
 import { Footer } from '@/components/layout/Footer';
+import Link from 'next/link';
+import HowToPlayModal from '@/components/ui/HowToPlayModal'; 
 interface PoolDisplay {
   label: string;
   range: string;
@@ -150,20 +152,25 @@ router.push('/dashboard');
 
   return (
     <div className="min-h-screen bg-white text-gray-900">
-
-      {/* Navbar */}
-      <nav className="border-b border-gray-100 px-6 py-4">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
+      <HowToPlayModal />
+        {/* Navbar */}
+          <nav className="border-b border-gray-100 px-6 py-4">
+          <div className="max-w-6xl mx-auto flex items-center justify-between">
           <span className="text-xl font-bold tracking-tight text-blue-600">
-            BRACKET
-          </span>
-          <button
-            onClick={handleCTA}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
-          >
-            {authenticated ? 'Go to App' : 'Launch App'}
-          </button>
-        </div>
+        BRACKET
+      </span>
+      <div className="flex items-center gap-4">
+        <Link href="/how-to-play" className="text-sm text-gray-500 hover:text-gray-900 transition-colors hidden sm:block">
+          How to Play
+        </Link>
+      <button
+      onClick={handleCTA}
+      className="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-blue-700 transition-colors"
+      >
+      {authenticated ? 'Go to App' : 'Launch App'}
+      </button>
+      </div>
+      </div>
       </nav>
 
       {/* Hero */}
