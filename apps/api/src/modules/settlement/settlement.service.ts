@@ -188,8 +188,8 @@ export class SettlementService {
         await this.updatePredictions(market.id, winningPool, parseFloat(market.total_stake));
         await this.xp.processMarketSettlement(market.id);
 
-        // Update jackpot_fee_collected — 1.5% dari total stake
-        const jackpotFee = parseFloat(market.total_stake) * 0.015;
+        // Update jackpot_fee_collected — 2.5% dari total stake
+        const jackpotFee = parseFloat(market.total_stake) * 0.025;
         await db
           .from('markets')
           .update({ jackpot_fee_collected: jackpotFee.toFixed(6) })

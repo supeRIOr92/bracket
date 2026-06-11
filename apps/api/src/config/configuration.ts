@@ -24,7 +24,6 @@ export default () => ({
   treasury: {
     dev: process.env.DEV_TREASURY_ADDRESS!,
     jackpot: process.env.JACKPOT_TREASURY_ADDRESS!,
-    flywheel: process.env.FLYWHEEL_TREASURY_ADDRESS!,
   },
   redis: {
     url: process.env.REDIS_URL!,
