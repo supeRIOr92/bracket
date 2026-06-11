@@ -11,7 +11,7 @@ export function useTodayMarket() {
       return res.data;
     },
     refetchInterval: 30_000, // refresh tiap 30 detik
-    retry: false,
+    retry: 1,
   });
 }
 
