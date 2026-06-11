@@ -5,8 +5,7 @@ import { ArrowLeft, Trophy, Zap, Target, Users, Shield, TrendingUp, Star, Activi
 import { Footer } from '@/components/layout/Footer';
 
 export default function HowToPlayPage() {
-    return
-    (
+return (
 <div className="min-h-screen bg-white text-gray-900">
 
 {/* Navbar */}
