@@ -331,6 +331,63 @@ export class MarketsService {
 
       if (error) throw new Error(error.message);
       this.logger.log(`Daily market created: ${data.id} | BTC=$${btcPrice} | move=${(movePct*100).toFixed(2)}%`);
+
+      // ── Register ke smart contract ────────────────────────────────────────
+      const contractAddress = this.config.get<string>('blockchain.contractAddress');
+      const privateKey = this.config.get<string>('blockchain.deployerPrivateKey');
+
+      if (contractAddress && privateKey) {
+        try {
+          const provider = new ethers.JsonRpcProvider(
+            this.config.get<string>('blockchain.rpcUrl') || 'https://mainnet.base.org',
+          );
+          const wallet = new ethers.Wallet(privateKey, provider);
+          const contract = new ethers.Contract(
+            contractAddress,
+            [
+              'function createMarket(uint256 openAt, uint256 closeAt, uint256 settleAt, int256[4] calldata bounds) external returns (uint256)',
+              'event MarketCreated(uint256 indexed marketId, uint256 openAt, uint256 closeAt, uint256 settleAt, int256[4] bounds)',
+            ],
+            wallet,
+          );
+
+          const openAt   = Math.floor(new Date(`${today}T00:00:00Z`).getTime() / 1000);
+          const closeAt  = Math.floor(new Date(`${today}T23:00:00Z`).getTime() / 1000);
+          const settleAt = Math.floor(new Date(`${today}T23:59:00Z`).getTime() / 1000);
+          const chainBounds: [bigint, bigint, bigint, bigint] = [
+            BigInt(Math.round(bounds.poolAUpper * 1e8)),
+            BigInt(Math.round(bounds.poolBUpper * 1e8)),
+            BigInt(Math.round(bounds.poolCUpper * 1e8)),
+            BigInt(Math.round(bounds.poolDUpper * 1e8)),
+          ];
+
+          const tx = await contract.createMarket(openAt, closeAt, settleAt, chainBounds);
+          const receipt = await tx.wait();
+
+          const iface = new ethers.Interface([
+            'event MarketCreated(uint256 indexed marketId, uint256 openAt, uint256 closeAt, uint256 settleAt, int256[4] bounds)',
+          ]);
+          let chainMarketId: number | null = null;
+          for (const log of receipt.logs) {
+            try {
+              const parsed = iface.parseLog(log);
+              if (parsed?.name === 'MarketCreated') {
+                chainMarketId = Number(parsed.args.marketId);
+              }
+            } catch {}
+          }
+
+          if (chainMarketId !== null) {
+            await db.from('markets').update({ chain_market_id: chainMarketId }).eq('id', data.id);
+            this.logger.log(`Market registered onchain: chain_market_id=${chainMarketId}`);
+          }
+        } catch (chainErr) {
+          this.logger.error('Failed to register market onchain (DB market still created):', chainErr);
+        }
+      } else {
+        this.logger.warn('CONTRACT_ADDRESS or DEPLOYER_PRIVATE_KEY not set — skipping onchain registration');
+      }
+
     } catch (err) {
       this.logger.error('Failed to create daily market:', err);
     }
