@@ -133,8 +133,8 @@ export class JackpotService {
     /**
     * Weekly jackpot draw — setiap Senin jam 12:00 UTC.
     */
-    @Cron('0 12 * * 1', { timeZone: 'UTC' })
-    async weeklyDraw() {
+    @Cron('0 12 1 * *', { timeZone: 'UTC' })
+    async monthlyDraw() {
 
     this.logger.log('Running weekly jackpot draw...');
 
@@ -245,7 +245,7 @@ export class JackpotService {
   private getCurrentSeason(): string {
     const now = new Date();
     const year = now.getFullYear();
-    const quarter = Math.ceil((now.getMonth() + 1) / 3);
-    return `${year}-Q${quarter}`;
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    return `${year}-${month}`;
   }
 }

@@ -285,7 +285,7 @@ router.push('/dashboard');
             <div className="flex items-center gap-4">
               <Trophy className="w-10 h-10 text-white" />
               <div>
-                <p className="text-blue-100 text-sm font-medium">Weekly Jackpot</p>
+                <p className="text-blue-100 text-sm font-medium">Monthly Jackpot</p>
                 <p className="text-white text-3xl font-bold">
                   {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(parseFloat(jackpot.amount || jackpot.pool_size || '0'))} USDC
                 </p>
