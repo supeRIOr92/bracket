@@ -72,14 +72,14 @@ The 5 Pools
 </h2>
 <p className="text-gray-600 leading-relaxed mb-6">
 Pool ranges are dynamically calculated each day using BTC's 7-day and 30-day realized volatility
-plus the average true range (ATR). The goal is a <strong className="text-gray-900">10-20-40-20-10% probability distribution</strong> — Pool C is
+plus the average true range (ATR). The goal is a <strong className="text-gray-900">10-20-30-20-10% probability distribution</strong> — Pool C is
 the most likely outcome, Pool A and E are the long shots.
 </p>
 <div className="border border-gray-100 rounded-2xl overflow-hidden">
 {[
 { pool: 'A', label: 'Extreme Bear', desc: 'BTC far below expected range', prob: '~10%', mult: 'Up to 11x', color: 'bg-blue-50' },
 { pool: 'B', label: 'Bearish', desc: 'BTC slightly below mid', prob: '~20%', mult: 'Up to 5x', color: 'bg-sky-50' },
-{ pool: 'C', label: 'Neutral', desc: 'BTC within expected range', prob: '~40%', mult: 'Up to 2x', color: 'bg-indigo-50' },
+{ pool: 'C', label: 'Neutral', desc: 'BTC within expected range', prob: '~30%', mult: 'Up to 3x', color: 'bg-indigo-50' },
 { pool: 'D', label: 'Bullish', desc: 'BTC slightly above mid', prob: '~20%', mult: 'Up to 5x', color: 'bg-violet-50' },
 { pool: 'E', label: 'Extreme Bull', desc: 'BTC far above expected range', prob: '~10%', mult: 'Up to 11x', color: 'bg-purple-50' },
 ].map ((item) => (

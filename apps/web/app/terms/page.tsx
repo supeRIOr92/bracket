@@ -28,7 +28,7 @@ return (
 
 <section>
 <h2 className="text-lg font-semibold text-gray-900 mb-2">4. Protocol Fees</h2>
-<p>A 5% fee is deducted from the total pool before payout. Fees are allocated as follows: development treasury, jackpot pool, and ecosystem flywheel. Fee allocation is enforced by the smart contract and cannot be altered unilaterally.</p>
+<p>A 5% fee is deducted from the total pool before payout. Fees are allocated as follows: 2.5% to the development treasury and 2.5% to the jackpot pool. Fee allocation is enforced by the smart contract and cannot be altered unilaterally.</p>
 </section>
 
 <section>
