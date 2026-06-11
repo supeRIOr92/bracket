@@ -113,7 +113,7 @@ router.push('/dashboard');
     {
       step: '01',
       title: 'Pick Your Range',
-      desc: 'Every day, 5 BTC price ranges are generated based on volatility. Pick the pool you think BTC will land in.',
+      desc: 'Every day, 5 BTC price brackets are generated based on volatility. Pick the bracket you think BTC will land in.',
     },
     {
       step: '02',
@@ -185,8 +185,9 @@ router.push('/dashboard');
           <span className="text-blue-600">Outsmart the Crowd.</span>
         </h1>
         <p className="text-xl text-gray-500 max-w-2xl mx-auto mb-10">
-          Daily BTC price range prediction. Pick your pool, stake USDC,
-          beat the crowd. Your skill — not your wallet size — determines your edge.
+          Daily BTC price bracket prediction. Pick your bracket, stake USDC,
+          Beat the crowd. Your skill — not your wallet size — determines your edge.
+
         </p>
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
           <button

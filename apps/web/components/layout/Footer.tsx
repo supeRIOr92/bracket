@@ -10,7 +10,7 @@ export function Footer() {
           <div className="md:col-span-1">
             <span className="font-bold text-blue-600 text-lg">BRACKET</span>
             <p className="text-gray-400 text-sm mt-2 leading-relaxed">
-              Daily BTC range prediction on Base. Skill over luck.
+              Daily BTC price bracket prediction on Base. Skill over luck.
             </p>
             <p className="text-gray-300 text-xs mt-4">
               Built on Base · Powered by Chainlink

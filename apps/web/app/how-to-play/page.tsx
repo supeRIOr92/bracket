@@ -40,7 +40,7 @@ The Basics
 <div className="space-y-4 text-gray-600 leading-relaxed">
 <p>
 Every day at <strong className="text-gray-900">00:00 UTC</strong>, a new BTC price prediction market opens.
-Five price ranges — called pools — are generated based on BTC's recent volatility.
+Five price brackets — called pools — are generated based on BTC's recent volatility.
 You pick the pool you think BTC will land in when the market closes at <strong className="text-gray-900">23:00 UTC</strong>.
 </p>
 <p>
