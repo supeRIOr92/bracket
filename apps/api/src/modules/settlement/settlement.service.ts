@@ -73,57 +73,11 @@ export class SettlementService {
    * Generate range berdasarkan volatilitas BTC dan buat market baru.
    */
 
+  /**
+   * @deprecated — gunakan POST /api/markets/create-today via MarketsService
+   */
   async autoCreateMarket() {
-    this.logger.log('Running auto-create market cron...');
-
-    try {
-      const bounds = await this.generateRangeBounds();
-      const now = new Date();
-      const todayStr = now.toISOString().split('T')[0];
-
-      // Timestamps dalam Unix seconds
-      const openAt = Math.floor(new Date(`${todayStr}T00:00:00Z`).getTime() / 1000);
-      const closeAt = Math.floor(new Date(`${todayStr}T23:00:00Z`).getTime() / 1000);
-      const settleAt = Math.floor(new Date(`${todayStr}T23:59:59Z`).getTime() / 1000) + 1;
-
-      // Kirim tx ke blockchain
-      const tx = await this.contract.createMarket(openAt, closeAt, settleAt, bounds);
-      const receipt = await tx.wait();
-
-      // Parse event untuk dapat marketId
-      const iface = new ethers.Interface(PREDICTION_MARKET_ABI);
-      let chainMarketId: number | null = null;
-
-      for (const log of receipt.logs) {
-        try {
-          const parsed = iface.parseLog(log);
-          if (parsed?.name === 'MarketCreated') {
-            chainMarketId = Number(parsed.args.marketId);
-          }
-        } catch {}
-      }
-
-      // Simpan ke database
-      const db = this.supabase.getClient();
-      await db.from('markets').insert({
-        chain_market_id: chainMarketId,
-        asset: 'BTC',
-        date: todayStr,
-        status: 'open',
-        open_at: new Date(openAt * 1000).toISOString(),
-        close_at: new Date(closeAt * 1000).toISOString(),
-        settle_at: new Date(settleAt * 1000).toISOString(),
-        pool_a_upper: ethers.formatUnits(bounds[0], 8),
-        pool_b_upper: ethers.formatUnits(bounds[1], 8),
-        pool_c_upper: ethers.formatUnits(bounds[2], 8),
-        pool_d_upper: ethers.formatUnits(bounds[3], 8),
-        btc_price_at_open: ethers.formatUnits(bounds[1], 8), // approx
-      });
-
-      this.logger.log(`Market created for ${todayStr}, chainId: ${chainMarketId}`);
-    } catch (err) {
-      this.logger.error('Failed to create market:', err);
-    }
+    this.logger.warn('autoCreateMarket() is deprecated, use createDailyMarket() via MarketsService');
   }
 
   /**

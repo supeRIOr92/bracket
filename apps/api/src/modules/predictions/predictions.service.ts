@@ -129,13 +129,16 @@ created_at,
 markets(date, status, winning_pool, settlement_price, pool_a_upper, pool_b_upper, pool_c_upper, pool_d_upper)
 `)
 .eq('user_id', user.id)
-.in('markets.status', ['settled', 'refunded'])
-.not('markets', 'is', null)
 .order('created_at', { ascending: false })
 .range(offset, offset + limit - 1);
 
 if (error) throw new Error(error.message);
-return data || [];
+
+// Filter di app level karena Supabase tidak support filter pada nested relation
+const filtered = (data || []).filter((p: any) =>
+p.markets && ['settled', 'refunded'].includes(p.markets.status)
+);
+return filtered;
 }
 
 async getClaimStatus(userId: string, marketId: string) {

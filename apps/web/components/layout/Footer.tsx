@@ -56,7 +56,7 @@ export function Footer() {
                 </a>
               </li>
               <li>
-                <a href="https://basescan.org/address/SOON" target="_blank" rel="noopener noreferrer"
+                <a href="https://basescan.org/address/0xB5c807311BCc2d9A1bAE2b35193faB035768E359" target="_blank" rel="noopener noreferrer"
                   className="text-sm text-gray-500 hover:text-gray-900 transition-colors">
                   Smart Contract ↗
                 </a>
