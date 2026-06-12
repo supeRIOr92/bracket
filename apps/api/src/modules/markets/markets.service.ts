@@ -300,7 +300,13 @@ export class MarketsService {
     };
   }
 
-  async createDailyMarket() {
+  @Cron('1 0 * * *', { timeZone: 'UTC' })
+async scheduledDailyMarket() {
+  this.logger.log('[Cron] Auto-creating daily market...');
+  await this.createDailyMarket();
+}
+
+async createDailyMarket() {
     this.logger.log('Creating daily market...');
     try {
       const { movePct, btcPrice } = await this.calcExpectedMovePct();
