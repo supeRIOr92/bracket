@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { usePrivy } from '@privy-io/react-auth';
-import { TrendingUp, Trophy, User, LogOut, Settings, Menu, X, Calendar, Star } from 'lucide-react';
+import { TrendingUp, Trophy, User, LogOut, Settings, Menu, X, Calendar, Star, Wallet } from 'lucide-react';
 import { formatAddress } from '@/lib/utils';
 import BtcTicker from '@/components/ui/BtcTicker';
 import NotificationCenter from '@/components/ui/NotificationCenter';
@@ -25,6 +25,7 @@ href: `/profile/${walletAddress}`,
 label: walletAddress ? formatAddress(walletAddress) : 'Profile',
 icon: User,
 },
+{ href: '/wallet', label: 'Wallet', icon: Wallet },
 {
 href: '/settings',
 label: 'Settings',

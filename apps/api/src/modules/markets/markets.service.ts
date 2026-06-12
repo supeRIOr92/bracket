@@ -293,10 +293,10 @@ export class MarketsService {
     const step = btcPrice * movePct;
     const round = (n: number) => Math.round(n / 50) * 50;
     return {
-      poolAUpper: round(btcPrice - 2 * step),
-      poolBUpper: round(btcPrice - step),
-      poolCUpper: round(btcPrice + step),
-      poolDUpper: round(btcPrice + 2 * step),
+      poolAUpper: round(btcPrice - 1.5 * step),
+      poolBUpper: round(btcPrice - 0.5 * step),
+      poolCUpper: round(btcPrice + 0.5 * step),
+      poolDUpper: round(btcPrice + 1.5 * step),
     };
   }
 

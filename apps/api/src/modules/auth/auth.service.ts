@@ -25,9 +25,15 @@ if (!claims) throw new UnauthorizedException('Invalid Privy token');
 
 const privyUser = await this.privy.getUser(claims.userId);
 
-const walletAddress = privyUser.wallet?.address?.toLowerCase();
+// Cek external wallet dulu, fallback ke embedded wallet di linkedAccounts
+const externalWallet = privyUser.wallet?.address;
+const embeddedWallet = (privyUser.linkedAccounts as any[])?.find(
+  (a: any) => a.type === 'wallet' && a.walletClientType === 'privy'
+)?.address;
+const walletAddress = (externalWallet || embeddedWallet)?.toLowerCase();
+
 if (!walletAddress) {
-throw new UnauthorizedException('No wallet address found');
+  throw new UnauthorizedException('No wallet address found. Please connect or create a wallet.');
 }
 
 const user = await this.upsertUser(walletAddress);

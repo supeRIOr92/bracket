@@ -13,13 +13,12 @@ import { ethers, upgrades, run } from 'hardhat';
 
 // ─── Addresses ────────────────────────────────────────────────────────────────
 
-const USDC_BASE          = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
-const CHAINLINK_BTC_USD  = '0xcD2A119bD1F7DF95d706DE6F2057fDD45A0503E'; // Base Mainnet BTC/USD
+const USDC_BASE         = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913';
+const CHAINLINK_BTC_USD = '0x64c911996D3c6aC71f9b455B1E8E7266BcbD848F';
 
 // Ganti dengan wallet/Safe address lo sebelum deploy
-const DEV_TREASURY       = process.env.DEV_TREASURY       || '';
-const JACKPOT_TREASURY   = process.env.JACKPOT_TREASURY   || '';
-const FLYWHEEL_TREASURY  = process.env.FLYWHEEL_TREASURY  || '';
+const DEV_TREASURY     = process.env.DEV_TREASURY     || '';
+const JACKPOT_TREASURY = process.env.JACKPOT_TREASURY || '';
 
 // ─── Main ─────────────────────────────────────────────────────────────────────
 
@@ -29,9 +28,9 @@ async function main() {
   console.log('Balance:', ethers.formatEther(await ethers.provider.getBalance(deployer.address)), 'ETH');
 
   // Validasi treasury addresses
-  if (!DEV_TREASURY || !JACKPOT_TREASURY || !FLYWHEEL_TREASURY) {
+  if (!DEV_TREASURY || !JACKPOT_TREASURY) {
     throw new Error(
-      'Set DEV_TREASURY, JACKPOT_TREASURY, FLYWHEEL_TREASURY di .env sebelum deploy',
+      'Set DEV_TREASURY, JACKPOT_TREASURY di .env sebelum deploy',
     );
   }
 
@@ -46,7 +45,6 @@ async function main() {
       CHAINLINK_BTC_USD,
       DEV_TREASURY,
       JACKPOT_TREASURY,
-      FLYWHEEL_TREASURY,
       deployer.address, // owner = deployer, bisa transfer nanti ke multisig
     ],
     {
@@ -57,9 +55,9 @@ async function main() {
 
   await proxy.waitForDeployment();
 
-  const proxyAddress    = await proxy.getAddress();
-  const implAddress     = await upgrades.erc1967.getImplementationAddress(proxyAddress);
-  const adminAddress    = await upgrades.erc1967.getAdminAddress(proxyAddress);
+  const proxyAddress = await proxy.getAddress();
+  const implAddress  = await upgrades.erc1967.getImplementationAddress(proxyAddress);
+  const adminAddress = await upgrades.erc1967.getAdminAddress(proxyAddress);
 
   console.log('\n✅ Deploy berhasil!');
   console.log('   Proxy address:      ', proxyAddress);
@@ -71,7 +69,7 @@ async function main() {
   console.log(`NEXT_PUBLIC_CONTRACT_ADDRESS=${proxyAddress}`);
   console.log(`CONTRACT_ADDRESS=${proxyAddress}`);
 
-  // ─── Verify on Basescan ────────────────────────────────────────────────────
+  // ─── Verify on Basescan ──────────────────────────────────────────────────────
   console.log('\n─── Verifying on Basescan (30s delay)... ───');
   await new Promise((r) => setTimeout(r, 30_000));
 
