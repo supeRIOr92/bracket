@@ -490,6 +490,9 @@ BigInt(Math.round(market.pool_d_upper * 1e8)),
 ];
 
 const feeData = await provider.getFeeData();
+
+let receipt: any;
+try {
 const tx = await contract.createMarket(openAt, closeAt, settleAt, chainBounds, {
 maxFeePerGas: feeData.maxFeePerGas
 ? (feeData.maxFeePerGas * 150n) / 100n
@@ -498,8 +501,20 @@ maxPriorityFeePerGas: feeData.maxPriorityFeePerGas
 ? (feeData.maxPriorityFeePerGas * 150n) / 100n
 : undefined,
 });
+receipt = await tx.wait();
+} catch (err: any) {
+if (err?.info?.error?.message?.includes('already known') || err?.info?.error?.message?.includes('replacement')) {
+this.logger.warn('TX already in mempool, waiting for confirmation...');
+await new Promise((r) => setTimeout(r, 30_000));
+const { data: updated } = await db.from('markets').select('chain_market_id').eq('id', marketId).single();
+if (updated?.chain_market_id) {
+return { success: true, chain_market_id: updated.chain_market_id, note: 'resolved from mempool' };
+}
+throw new Error('TX in mempool but chain_market_id still null after 30s. Update manually from Basescan.');
+}
+throw err;
+}
 
-const receipt = await tx.wait();
 const iface = new ethers.Interface([
 'event MarketCreated(uint256 indexed marketId, uint256 openAt, uint256 closeAt, uint256 settleAt, int256[4] bounds)',
 ]);
