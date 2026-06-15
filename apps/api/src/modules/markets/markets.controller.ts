@@ -36,7 +36,7 @@ export class MarketsController {
   getYesterdayWinners() {
     return this.marketsService.getYesterdayWinners();
   }
-  
+
   @Get('stats/platform')
   @ApiOperation({ summary: 'Platform-wide stats' })
   getPlatformStats() {
@@ -47,5 +47,10 @@ export class MarketsController {
   @ApiOperation({ summary: 'Manual trigger: buat market hari ini (testing)' })
   createTodayMarket() {
     return this.marketsService.createTodayMarketManual();
+  }
+  @Post(':id/register-onchain')
+  @ApiOperation({ summary: 'Retry onchain registration untuk market yang chain_market_id-nya null' })
+  retryOnchainRegistration(@Param('id') id: string) {
+    return this.marketsService.retryOnchainRegistration(id);
   }
 }

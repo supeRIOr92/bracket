@@ -373,7 +373,16 @@ async createDailyMarket() {
             BigInt(Math.round(bounds.poolDUpper * 1e8)),
           ];
 
-          const tx = await contract.createMarket(openAt, closeAt, settleAt, chainBounds);
+          const feeData = await provider.getFeeData();
+          const tx = await contract.createMarket(openAt, closeAt, settleAt, chainBounds, {
+          maxFeePerGas: feeData.maxFeePerGas
+          ? (feeData.maxFeePerGas * 150n) / 100n
+          : undefined,
+          maxPriorityFeePerGas: feeData.maxPriorityFeePerGas
+          ? (feeData.maxPriorityFeePerGas * 150n) / 100n
+          : undefined,
+          });
+
           const receipt = await tx.wait();
 
           const iface = new ethers.Interface([
@@ -435,6 +444,82 @@ async createDailyMarket() {
     totalPredictions: totalPredictions || 0,
     totalUsers: totalUsers || 0,
   };
+}
+async retryOnchainRegistration(marketId: string) {
+const db = this.supabase.getClient();
+
+const { data: market, error } = await db
+.from('markets')
+.select('*')
+.eq('id', marketId)
+.single();
+
+if (error || !market) throw new NotFoundException('Market not found');
+if (market.chain_market_id) {
+return { message: 'Already registered onchain', chain_market_id: market.chain_market_id };
+}
+
+const contractAddress = this.config.get<string>('blockchain.contractAddress');
+const privateKey = this.config.get<string>('blockchain.deployerPrivateKey');
+
+if (!contractAddress || !privateKey) {
+throw new Error('CONTRACT_ADDRESS or DEPLOYER_PRIVATE_KEY not set');
+}
+
+const provider = new ethers.JsonRpcProvider(
+this.config.get<string>('blockchain.rpcUrl') || 'https://mainnet.base.org',
+);
+const wallet = new ethers.Wallet(privateKey, provider);
+const contract = new ethers.Contract(
+contractAddress,
+[
+'function createMarket(uint256 openAt, uint256 closeAt, uint256 settleAt, int256[4] calldata bounds) external returns (uint256)',
+'event MarketCreated(uint256 indexed marketId, uint256 openAt, uint256 closeAt, uint256 settleAt, int256[4] bounds)',
+],
+wallet,
+);
+
+const openAt = Math.floor(new Date(market.open_at).getTime() / 1000);
+const closeAt = Math.floor(new Date(market.close_at).getTime() / 1000);
+const settleAt = Math.floor(new Date(market.settle_at).getTime() / 1000);
+const chainBounds: [bigint, bigint, bigint, bigint] = [
+BigInt(Math.round(market.pool_a_upper * 1e8)),
+BigInt(Math.round(market.pool_b_upper * 1e8)),
+BigInt(Math.round(market.pool_c_upper * 1e8)),
+BigInt(Math.round(market.pool_d_upper * 1e8)),
+];
+
+const feeData = await provider.getFeeData();
+const tx = await contract.createMarket(openAt, closeAt, settleAt, chainBounds, {
+maxFeePerGas: feeData.maxFeePerGas
+? (feeData.maxFeePerGas * 150n) / 100n
+: undefined,
+maxPriorityFeePerGas: feeData.maxPriorityFeePerGas
+? (feeData.maxPriorityFeePerGas * 150n) / 100n
+: undefined,
+});
+
+const receipt = await tx.wait();
+const iface = new ethers.Interface([
+'event MarketCreated(uint256 indexed marketId, uint256 openAt, uint256 closeAt, uint256 settleAt, int256[4] bounds)',
+]);
+
+let chainMarketId: number | null = null;
+for (const log of receipt.logs) {
+try {
+const parsed = iface.parseLog(log);
+if (parsed?.name === 'MarketCreated') {
+chainMarketId = Number(parsed.args.marketId);
+}
+} catch {}
+}
+
+if (!chainMarketId) throw new Error('MarketCreated event not found in receipt');
+
+await db.from('markets').update({ chain_market_id: chainMarketId }).eq('id', marketId);
+
+this.logger.log(`Retry success: market ${marketId} registered onchain as chain_market_id=${chainMarketId}`);
+return { success: true, chain_market_id: chainMarketId };
 }
 
 }
