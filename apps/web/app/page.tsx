@@ -219,35 +219,23 @@ router.push('/dashboard');
         </div>
       </section>
 
-      {/* Stats Bar */}
-      <section className="border-y border-gray-100 bg-gray-50 py-8">
-        <div className="max-w-6xl mx-auto px-6 grid grid-cols-3 gap-8 text-center">
-          <div>
-            <p className="text-3xl font-bold text-gray-900">
-              {platformStats ? `$${Number(platformStats.totalVolume).toLocaleString()}` : 'Daily'}
-            </p>
-            <p className="text-sm text-gray-500 mt-1">
-              {platformStats ? 'Total Volume' : 'New Market'}
-            </p>
-          </div>
-          <div>
-            <p className="text-3xl font-bold text-gray-900">
-              {platformStats ? Number(platformStats.totalPredictions).toLocaleString() : '5 Pools'}
-            </p>
-            <p className="text-sm text-gray-500 mt-1">
-              {platformStats ? 'Predictions' : 'Per Market'}
-            </p>
-          </div>
-          <div>
-            <p className="text-3xl font-bold text-gray-900">
-              {platformStats ? Number(platformStats.totalUsers).toLocaleString() : 'USDC'}
-            </p>
-            <p className="text-sm text-gray-500 mt-1">
-              {platformStats ? 'Users' : 'Always'}
-            </p>
-          </div>
-        </div>
-      </section>
+          {/* Stats Bar */}
+          <section className="border-y border-gray-100 bg-gray-50 py-8">
+            <div className="max-w-6xl mx-auto px-6 grid grid-cols-3 gap-8 text-center">
+            <div>
+              <p className="text-3xl font-bold text-gray-900">Daily</p>
+              <p className="text-sm text-gray-500 mt-1">New Market</p>
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-gray-900">5 Pools</p>
+              <p className="text-sm text-gray-500 mt-1">Per Market</p>
+            </div>
+            <div>
+              <p className="text-3xl font-bold text-gray-900">USDC</p>
+              <p className="text-sm text-gray-500 mt-1">Always</p>
+            </div>
+            </div>
+          </section>
 
       {/* How It Works */}
       <section id="how-it-works" className="max-w-6xl mx-auto px-6 py-24">
