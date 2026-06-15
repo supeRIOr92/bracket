@@ -22,6 +22,7 @@ getById: (id: string) => api.get(`/api/markets/${id}`),
 getToday: () => api.get('/api/markets/today'),
 getPools: (id: string) => api.get(`/api/markets/${id}/pools`),
 getYesterdayWinners: () => api.get('/api/markets/yesterday/winners'),
+getPlatformStats: () => api.get('/api/markets/stats/platform'),
 };
 
 // Predictions
@@ -47,6 +48,8 @@ updateProfile: (data: { username?: string; bio?: string; avatarUrl?: string }) =
 api.put('/api/users/me', data),
 follow: (id: string) => api.post(`/api/users/${id}/follow`),
 unfollow: (id: string) => api.delete(`/api/users/${id}/follow`),
+getFollowing: (id: string) => api.get(`/api/users/${id}/following`),
+getFollowers: (id: string) => api.get(`/api/users/${id}/followers`),
 getLeaderboard: (category = 'pr_score') =>
 api.get(`/api/users/leaderboard?category=${category}`),
 };

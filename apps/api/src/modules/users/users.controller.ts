@@ -89,6 +89,18 @@ export class UsersController {
     return this.usersService.followUser(user.id, targetId);
   }
 
+    @Get(':id/following')
+    @ApiOperation({ summary: 'following user list' })
+    getFollowing(@Param('id') id: string) {
+      return this.usersService.getFollowing(id);
+    }
+
+    @Get(':id/followers')
+    @ApiOperation({ summary: 'List follower this user' })
+    getFollowers(@Param('id') id: string) {
+      return this.usersService.getFollowers(id);
+    }
+
   @Delete(':id/follow')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth()

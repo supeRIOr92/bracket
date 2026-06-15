@@ -279,6 +279,7 @@ return(
                       <span className="text-gray-400">{pct}% of pool</span>
                       <span className={`font-bold ${colors.text}`}>
                         {pool.estimatedMultiplier !== '—' ? `${pool.estimatedMultiplier}x` : '—'}
+                        <p className="text-xs text-gray-400 mt-0.5">est. · final at close</p>
                       </span>
                     </div>
                   </div>

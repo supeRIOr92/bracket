@@ -8,35 +8,19 @@ export class JackpotService {
 
   constructor(private supabase: SupabaseService) {}
 
-  /**
-   * Ambil info jackpot saat ini — prize pool + eligibility count.
-   */
   async getCurrentJackpot() {
     const db = this.supabase.getClient();
+    const undistributed = await this.getUndistributedPool(db);
 
-    // Total jackpot treasury (dari fee yang terkumpul)
-    const { data: markets } = await db
-      .from('markets')
-      .select('jackpot_fee_collected')
-      .eq('status', 'settled');
-
-    const totalJackpot = (markets || []).reduce(
-      (sum, m) => sum + parseFloat(m.jackpot_fee_collected || '0'),
-      0,
-    );
-
-    // Jumlah eligible users
     const { count: eligibleCount } = await db
       .from('jackpot_eligibility')
       .select('*', { count: 'exact', head: true })
       .eq('is_eligible', true);
 
-    const currentSeason = this.getCurrentSeason();
-
     return {
-      totalPool: totalJackpot.toFixed(2),
+      totalPool: undistributed.toFixed(2),
       eligibleUsers: eligibleCount || 0,
-      season: currentSeason,
+      season: this.getCurrentSeason(),
       distribution: {
         community: '50%',
         skill: '25%',
@@ -46,10 +30,30 @@ export class JackpotService {
     };
   }
 
-  /**
-   * Cek eligibility jackpot untuk user.
-   * Eligible jika: account >= 30 hari DAN settled predictions >= 20.
-   */
+  private async getUndistributedPool(db: any): Promise<number> {
+    const { data: lastDraw } = await db
+      .from('jackpot_draws')
+      .select('draw_date')
+      .order('draw_date', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    let query = db
+      .from('markets')
+      .select('jackpot_fee_collected')
+      .eq('status', 'settled');
+
+    if (lastDraw?.draw_date) {
+      query = query.gt('updated_at', lastDraw.draw_date);
+    }
+
+    const { data: markets } = await query;
+    return (markets || []).reduce(
+      (sum: number, m: any) => sum + parseFloat(m.jackpot_fee_collected || '0'),
+      0,
+    );
+  }
+
   async checkEligibility(userId: string) {
     const db = this.supabase.getClient();
 
@@ -69,11 +73,10 @@ export class JackpotService {
       .from('predictions')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', userId)
-      .not('is_winner', 'is', null); // sudah settled
+      .not('is_winner', 'is', null);
 
     const isEligible = accountAgeDays >= 30 && (settledPredictions || 0) >= 20;
 
-    // Upsert eligibility
     await db.from('jackpot_eligibility').upsert({
       user_id: userId,
       account_age_days: accountAgeDays,
@@ -93,55 +96,34 @@ export class JackpotService {
     };
   }
 
-    /**
-    * Ambil history jackpot draws.
-    */
-    async getHistory(limit = 20) {
+  async getHistory(limit = 20) {
     const db = this.supabase.getClient();
-
     const { data, error } = await db
-    .from('jackpot_draws')
-    .select(`
-    *,
-    users(username, wallet_address)
-    `)
-    .order('draw_date', { ascending: false })
-    .limit(limit);
-
+      .from('jackpot_draws')
+      .select(`*, users(username, wallet_address)`)
+      .order('draw_date', { ascending: false })
+      .limit(limit);
     if (error) throw new Error(error.message);
     return data || [];
-    }
+  }
 
-    /**
-    * Daily eligibility refresh — setiap hari jam 01:00 UTC.
-    */
-    @Cron('0 1 * * *', { timeZone: 'UTC' })
-    async refreshAllEligibility() {
+  @Cron('0 1 * * *', { timeZone: 'UTC' })
+  async refreshAllEligibility() {
     this.logger.log('Refreshing jackpot eligibility for all users...');
     const db = this.supabase.getClient();
-
     const { data: users } = await db.from('users').select('id');
     if (!users?.length) return;
-
     for (const user of users) {
-    await this.checkEligibility(user.id);
+      await this.checkEligibility(user.id);
     }
-
     this.logger.log(`Eligibility refreshed for ${users.length} users`);
-    }
+  }
 
-    /**
-    * Weekly jackpot draw — setiap Senin jam 12:00 UTC.
-    */
-    @Cron('0 12 1 * *', { timeZone: 'UTC' })
-    async monthlyDraw() {
-
-    this.logger.log('Running weekly jackpot draw...');
-
+  @Cron('0 12 1 * *', { timeZone: 'UTC' })
+  async monthlyDraw() {
+    this.logger.log('Running monthly jackpot draw...');
     const db = this.supabase.getClient();
     const currentSeason = this.getCurrentSeason();
-
-    // Ambil semua eligible users
     const { data: eligibleUsers } = await db
       .from('jackpot_eligibility')
       .select('user_id')
@@ -153,16 +135,7 @@ export class JackpotService {
       return;
     }
 
-    // Ambil total jackpot dari fee yang terkumpul
-    const { data: feeData } = await db
-      .from('markets')
-      .select('jackpot_fee_collected')
-      .eq('status', 'settled');
-
-    const basePrize = (feeData || []).reduce(
-      (sum, m) => sum + parseFloat(m.jackpot_fee_collected || '0'),
-      0,
-    );
+    const basePrize = await this.getUndistributedPool(db);
 
     if (basePrize <= 0) {
       this.logger.log('Jackpot pool is empty — skipping draw');
@@ -173,20 +146,15 @@ export class JackpotService {
     await this.drawSkillJackpot(basePrize * 0.25, currentSeason);
     await this.drawActivityJackpot(basePrize * 0.15, currentSeason);
     await this.drawContrarianJackpot(basePrize * 0.10, currentSeason);
+
+    this.logger.log(`Monthly draw complete. Total: ${basePrize.toFixed(2)} USDC`);
   }
 
-  private async drawCategory(
-    category: string,
-    userIds: string[],
-    prizeAmount: number,
-    season: string,
-  ) {
+  private async drawCategory(category: string, userIds: string[], prizeAmount: number, season: string) {
     if (!userIds.length) return;
-
     const db = this.supabase.getClient();
     const winner = userIds[Math.floor(Math.random() * userIds.length)];
     const today = new Date().toISOString().split('T')[0];
-
     await db.from('jackpot_draws').insert({
       season,
       draw_date: today,
@@ -194,58 +162,46 @@ export class JackpotService {
       winner_user_id: winner,
       prize_amount: prizeAmount.toFixed(6),
     });
-
-    this.logger.log(`Jackpot ${category}: winner ${winner}, prize ${prizeAmount} USDC`);
+    this.logger.log(`Jackpot ${category}: winner ${winner}, prize ${prizeAmount.toFixed(2)} USDC`);
   }
 
   private async drawSkillJackpot(prizeAmount: number, season: string) {
     const db = this.supabase.getClient();
-
-    // Top 3 PR Score season ini
     const { data: topUsers } = await db
       .from('season_rankings')
       .select('user_id')
       .eq('season', season)
       .order('rank', { ascending: true })
       .limit(3);
-
     if (!topUsers?.length) return;
     await this.drawCategory('skill', topUsers.map((u) => u.user_id), prizeAmount, season);
   }
 
   private async drawActivityJackpot(prizeAmount: number, season: string) {
     const db = this.supabase.getClient();
-
-    // User dengan streak terpanjang
     const { data: topStreak } = await db
       .from('user_stats')
       .select('user_id')
       .order('current_streak', { ascending: false })
       .limit(1);
-
     if (!topStreak?.length) return;
     await this.drawCategory('activity', [topStreak[0].user_id], prizeAmount, season);
   }
 
   private async drawContrarianJackpot(prizeAmount: number, season: string) {
     const db = this.supabase.getClient();
-
-    // User dengan contrarian win rate tertinggi (min 10 predictions di A/E)
     const { data: topContrarian } = await db
       .from('user_stats')
       .select('user_id, contrarian_attempts, contrarian_wins')
       .gte('contrarian_attempts', 10)
       .order('contrarian_wins', { ascending: false })
       .limit(1);
-
     if (!topContrarian?.length) return;
     await this.drawCategory('contrarian', [topContrarian[0].user_id], prizeAmount, season);
   }
 
   private getCurrentSeason(): string {
     const now = new Date();
-    const year = now.getFullYear();
-    const month = String(now.getMonth() + 1).padStart(2, '0');
-    return `${year}-${month}`;
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
   }
 }

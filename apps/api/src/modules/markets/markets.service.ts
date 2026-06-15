@@ -58,8 +58,14 @@ export class MarketsService {
       .single();
 
     if (error || !data) throw new NotFoundException('No market for today');
-    return data;
-  }
+
+    const { count: participantsCount } = await db
+      .from('predictions')
+      .select('*', { count: 'exact', head: true })
+      .eq('market_id', data.id);
+
+    return { ...data, participants_count: participantsCount || 0 };
+      }
 
   /**
    * Pool distribution realtime untuk market tertentu.
@@ -402,4 +408,33 @@ async createDailyMarket() {
   async createTodayMarketManual() {
     return this.createDailyMarket();
   }
+  async getPlatformStats() {
+  const db = this.supabase.getClient();
+
+  const { data: volumeData } = await db
+    .from('markets')
+    .select('total_stake')
+    .eq('status', 'settled');
+
+  const totalVolume = (volumeData || []).reduce(
+    (sum: number, m: any) => sum + parseFloat(m.total_stake || '0'),
+    0,
+  );
+
+  const { count: totalPredictions } = await db
+    .from('predictions')
+    .select('*', { count: 'exact', head: true })
+    .not('is_winner', 'is', null);
+
+  const { count: totalUsers } = await db
+    .from('users')
+    .select('*', { count: 'exact', head: true });
+
+  return {
+    totalVolume: totalVolume.toFixed(2),
+    totalPredictions: totalPredictions || 0,
+    totalUsers: totalUsers || 0,
+  };
+}
+
 }

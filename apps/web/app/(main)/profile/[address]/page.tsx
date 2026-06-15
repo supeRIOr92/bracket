@@ -14,7 +14,59 @@ import {
 const POOL_LABELS = ['A', 'B', 'C', 'D', 'E'];
 const POOL_COLORS = ['bg-red-100 text-red-700', 'bg-orange-100 text-orange-700', 'bg-blue-100 text-blue-700', 'bg-green-100 text-green-700', 'bg-purple-100 text-purple-700'];
 
-const TABS = ['Overview', 'Performance', 'Predictions', 'Achievements'];
+const TABS = ['Overview', 'Performance', 'Predictions', 'Achievements', 'Network'];
+
+function FollowListSection({
+  title,
+  queryKey,
+  fetchFn,
+  emptyText,
+}: {
+  title: string;
+  queryKey: any[];
+  fetchFn: () => Promise<any>;
+  emptyText: string;
+}) {
+  const { data = [], isLoading } = useQuery({
+    queryKey,
+    queryFn: async () => (await fetchFn()).data,
+  });
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 p-6">
+      <h2 className="font-semibold text-gray-900 mb-4">
+        {title} <span className="text-gray-400 font-normal text-sm">({data.length})</span>
+      </h2>
+      {isLoading ? (
+        <p className="text-sm text-gray-400">Loading...</p>
+      ) : !data.length ? (
+        <p className="text-sm text-gray-400">{emptyText}</p>
+      ) : (
+        <div className="space-y-3">
+          {data.map((u: any) => (
+            <a
+              key={u.id}
+              href={`/profile/${u.wallet_address}`}
+              className="flex items-center justify-between py-2 hover:bg-gray-50 rounded-lg px-2 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                  <User className="w-4 h-4 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-gray-900">
+                    {u.username || formatAddress(u.wallet_address)}
+                  </p>
+                  <p className="text-xs text-gray-400">Lv.{u.user_stats?.level || 1}</p>
+                </div>
+              </div>
+              <span className="text-xs text-gray-400">PR {u.user_stats?.pr_score || 0}</span>
+            </a>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function ProfilePage() {
   const { address } = useParams<{ address: string }>();
@@ -333,7 +385,23 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
-
+      {/* NETWORK */}
+{activeTab === 'Network' && (
+  <div className="space-y-4">
+    <FollowListSection
+      title="Following"
+      queryKey={['following', user.id]}
+      fetchFn={() => usersApi.getFollowing(user.id)}
+      emptyText="Not following anyone yet."
+    />
+    <FollowListSection
+      title="Followers"
+      queryKey={['followers', user.id]}
+      fetchFn={() => usersApi.getFollowers(user.id)}
+      emptyText="No followers yet."
+    />
+  </div>
+)}
     </div>
   );
 }

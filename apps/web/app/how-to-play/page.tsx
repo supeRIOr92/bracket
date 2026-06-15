@@ -45,7 +45,7 @@ You pick the pool you think BTC will land in when the market closes at <strong c
 </p>
 <p>
 At <strong className="text-gray-900">midnight UTC</strong>, Chainlink oracle reads the BTC/USD price on-chain.
-If your pool wins, you split the entire prize pool with other winners — proportional to your stake.
+If your pool wins, you receive a share of the prize pool proportional to your stake — the more you staked, the larger your share.
 If no one wins (or only one pool has bets), everyone gets a full refund.
 </p>
 </div>

@@ -461,7 +461,7 @@ date={new Date().toISOString()}
           <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">
             <Users className="w-4 h-4" />Participants
           </div>
-          <p className="text-lg sm:text-2xl font-bold text-gray-900">—</p>
+          <p className="text-lg sm:text-2xl font-bold text-gray-900">{market.participants_count ?? '—'}</p>
         </div>
         <div className="bg-white rounded-xl border border-gray-100 p-5">
           <div className="flex items-center gap-2 text-gray-400 text-sm mb-1">

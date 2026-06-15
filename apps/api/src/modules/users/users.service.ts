@@ -151,4 +151,34 @@ const { data } = await db
 
 return data;
 }
+
+async getFollowing(userId: string) {
+  const db = this.supabase.getClient();
+  const { data, error } = await db
+    .from('follows')
+    .select(`
+      following_id,
+      users!follows_following_id_fkey(
+        id, username, wallet_address, user_stats(pr_score, level)
+      )
+    `)
+    .eq('follower_id', userId);
+  if (error) throw new Error(error.message);
+  return (data || []).map((row: any) => row.users);
+}
+
+async getFollowers(userId: string) {
+  const db = this.supabase.getClient();
+  const { data, error } = await db
+    .from('follows')
+    .select(`
+      follower_id,
+      users!follows_follower_id_fkey(
+        id, username, wallet_address, user_stats(pr_score, level)
+      )
+    `)
+    .eq('following_id', userId);
+  if (error) throw new Error(error.message);
+  return (data || []).map((row: any) => row.users);
+}
 }

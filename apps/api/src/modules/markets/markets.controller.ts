@@ -36,6 +36,12 @@ export class MarketsController {
   getYesterdayWinners() {
     return this.marketsService.getYesterdayWinners();
   }
+  
+  @Get('stats/platform')
+  @ApiOperation({ summary: 'Platform-wide stats' })
+  getPlatformStats() {
+    return this.marketsService.getPlatformStats();
+  }
 
   @Post('create-today')
   @ApiOperation({ summary: 'Manual trigger: buat market hari ini (testing)' })

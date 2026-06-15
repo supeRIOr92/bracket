@@ -89,6 +89,19 @@ router.push('/dashboard');
     enabled: !!liveMarket?.id,
     refetchInterval: 15_000,
   });
+  
+      const { data: platformStats } = useQuery({
+      queryKey: ['platform-stats'],
+      queryFn: async () => {
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/markets/stats/platform`);
+          if (!res.ok) return null;
+          return res.json();
+        } catch { return null; }
+      },
+      staleTime: 60_000,
+    });
+
   const pools: PoolDisplay[] = livePools?.length ? livePools.map((p: any, i: number) => ({
     label: p.label,
     range: p.range,
@@ -210,16 +223,28 @@ router.push('/dashboard');
       <section className="border-y border-gray-100 bg-gray-50 py-8">
         <div className="max-w-6xl mx-auto px-6 grid grid-cols-3 gap-8 text-center">
           <div>
-            <p className="text-3xl font-bold text-gray-900">Daily</p>
-            <p className="text-sm text-gray-500 mt-1">New Market</p>
+            <p className="text-3xl font-bold text-gray-900">
+              {platformStats ? `$${Number(platformStats.totalVolume).toLocaleString()}` : 'Daily'}
+            </p>
+            <p className="text-sm text-gray-500 mt-1">
+              {platformStats ? 'Total Volume' : 'New Market'}
+            </p>
           </div>
           <div>
-            <p className="text-3xl font-bold text-gray-900">5 Pools</p>
-            <p className="text-sm text-gray-500 mt-1">Per Market</p>
+            <p className="text-3xl font-bold text-gray-900">
+              {platformStats ? Number(platformStats.totalPredictions).toLocaleString() : '5 Pools'}
+            </p>
+            <p className="text-sm text-gray-500 mt-1">
+              {platformStats ? 'Predictions' : 'Per Market'}
+            </p>
           </div>
           <div>
-            <p className="text-3xl font-bold text-gray-900">USDC</p>
-            <p className="text-sm text-gray-500 mt-1">Always</p>
+            <p className="text-3xl font-bold text-gray-900">
+              {platformStats ? Number(platformStats.totalUsers).toLocaleString() : 'USDC'}
+            </p>
+            <p className="text-sm text-gray-500 mt-1">
+              {platformStats ? 'Users' : 'Always'}
+            </p>
           </div>
         </div>
       </section>
