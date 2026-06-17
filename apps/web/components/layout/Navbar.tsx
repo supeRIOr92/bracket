@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { usePrivy } from '@privy-io/react-auth';
 import { TrendingUp, Trophy, User, LogOut, Settings, Menu, X, Calendar, Star, Wallet } from 'lucide-react';
@@ -42,9 +43,10 @@ return (
 <div className="flex items-center gap-4">
 <Link
 href={authenticated ? '/dashboard' : '/'}
-className="text-xl font-bold text-blue-600"
+className="flex items-center gap-2"
 >
-BRACKET
+  <Image src="/logo.png" alt="Bracket" width={32} height={32} className="rounded-lg" />
+  <span className="text-xl font-bold text-blue-600">BRACKET</span>
 </Link>
 <div className="hidden sm:block">
 <BtcTicker />
@@ -100,7 +102,10 @@ className="p-1.5 text-gray-500 hover:text-gray-900"
 
 {/* Header overlay */}
 <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-<span className="text-xl font-bold text-blue-600">BRACKET</span>
+<div className="flex items-center gap-2">
+  <Image src="/logo.png" alt="Bracket" width={32} height={32} className="rounded-lg" />
+  <span className="text-xl font-bold text-blue-600">BRACKET</span>
+</div>
 <button
 onClick={() => setMobileOpen(false)}
 className="p-1.5 text-gray-500 hover:text-gray-900"

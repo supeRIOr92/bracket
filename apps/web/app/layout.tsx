@@ -8,10 +8,15 @@ const inter = Inter({ subsets: ['latin'] });
 export const metadata: Metadata = {
   title: 'BRACKET — Predict the Market',
   description: 'BTC daily range prediction market. Outsmart the crowd.',
+  icons: {
+    icon: '/logo.png',
+    apple: '/logo.png',
+  },
   openGraph: {
     title: 'BRACKET',
     description: 'BTC daily range prediction market. Outsmart the crowd.',
     type: 'website',
+    images: ['/logo.png'],
   },
 };
 
