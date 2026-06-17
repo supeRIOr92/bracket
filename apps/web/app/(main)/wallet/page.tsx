@@ -35,6 +35,7 @@ export default function WalletPage() {
   const address = wallet?.address ?? '';
 
   const [balance, setBalance] = useState<string | null>(null);
+  const [ethBalance, setEthBalance] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [toAddress, setToAddress] = useState('');
   const [amount, setAmount] = useState('');
@@ -53,6 +54,10 @@ export default function WalletPage() {
     }).then((raw) => {
       setBalance(formatUnits(raw as bigint, 6));
     }).catch(() => setBalance('0'));
+
+    publicClient.getBalance({ address: address as `0x${string}` })
+      .then((raw) => setEthBalance(formatUnits(raw, 18)))
+      .catch(() => setEthBalance('0'));
   }, [address]);
 
   const handleCopy = () => {
@@ -127,12 +132,28 @@ export default function WalletPage() {
       <h1 className="text-2xl font-bold text-gray-900">Wallet</h1>
 
       {/* Balance Card */}
-      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-2">
-        <p className="text-sm text-gray-400">USDC Balance</p>
-        <p className="text-4xl font-bold text-gray-900">
-          {balance === null ? '...' : `$${parseFloat(balance).toFixed(2)}`}
-        </p>
-        <p className="text-xs text-gray-400">on Base network</p>
+      <div className="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+        <div className="space-y-1">
+          <p className="text-sm text-gray-400">USDC Balance</p>
+          <p className="text-4xl font-bold text-gray-900">
+            {balance === null ? '...' : `$${parseFloat(balance).toFixed(2)}`}
+          </p>
+          <p className="text-xs text-gray-400">on Base network</p>
+        </div>
+        <div className="border-t border-gray-50 pt-4 flex items-center justify-between">
+          <div>
+            <p className="text-sm text-gray-400">ETH Balance</p>
+            <p className="text-lg font-semibold text-gray-900">
+              {ethBalance === null ? '...' : `${parseFloat(ethBalance).toFixed(6)} ETH`}
+            </p>
+            <p className="text-xs text-gray-400">for gas fees on Base</p>
+          </div>
+          {ethBalance !== null && parseFloat(ethBalance) < 0.0001 && (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-xl px-3 py-2 text-xs text-yellow-700 max-w-[160px] text-center">
+              ⚠️ Low ETH — top up to pay gas fees
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Deposit */}
