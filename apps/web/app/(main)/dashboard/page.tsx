@@ -685,12 +685,6 @@ Done
                     </p>
                   )}
 
-                  {amount && exceedsMax && (
-                    <p className="text-red-500 text-xs mt-1">
-                      Max bet: {formatUSDC(maxBet!)} (5% of pool)
-                    </p>
-                  )}
-
                   <div className="flex gap-2 mt-2">
                     {[10, 25, 50, 100].map((preset) => (
                       <button key={preset} onClick={() => setAmount(String(preset))}

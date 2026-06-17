@@ -378,7 +378,7 @@ return(
       <div className="space-y-6">
         {/* Crowd Sentiment */}
           {pools && pools.length > 0 && (() => {
-            const totalStake = pools.reduce((sum: number, p: any) => sum + parseFloat(p.total_stake || '0'), 0);
+            const totalStake = pools.reduce((sum: number, p: any) => sum + parseFloat(p.stake || '0'), 0);
             const POOL_LABELS = ['A', 'B', 'C', 'D', 'E'];
             const BAR_COLORS = ['bg-blue-400', 'bg-sky-400', 'bg-indigo-400', 'bg-violet-400', 'bg-purple-400'];
           return (
@@ -387,7 +387,7 @@ return(
                 <p className="text-xs text-gray-400 mb-4">Distribution of stakes across pools</p>
             <div className="space-y-3">
             {pools.map((pool: any, i: number) => {
-              const stake = parseFloat(pool.total_stake || '0');
+              const stake = parseFloat(pool.stake || '0');
               const pct = totalStake > 0 ? Math.round((stake / totalStake) * 100) : 0;
               const multiplier = pool.estimatedMultiplier || pool.estimated_multiplier || '—';
             return (

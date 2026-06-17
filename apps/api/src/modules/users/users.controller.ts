@@ -89,6 +89,17 @@ export class UsersController {
     return this.usersService.followUser(user.id, targetId);
   }
 
+    @Get(':id/follow-status')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Cek apakah current user follow user ini' })
+  async getFollowStatus(
+    @CurrentUser() user: any,
+    @Param('id') targetId: string,
+  ) {
+    return this.usersService.getFollowStatus(user.id, targetId);
+  }
+
     @Get(':id/following')
     @ApiOperation({ summary: 'following user list' })
     getFollowing(@Param('id') id: string) {

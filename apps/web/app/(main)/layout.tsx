@@ -2,7 +2,7 @@
 
 import { usePrivy } from '@privy-io/react-auth';
 import { useRouter } from 'next/navigation';
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Navbar } from '@/components/layout/Navbar';
 import { Footer } from '@/components/layout/Footer';
 import { authApi } from '@/lib/api';
@@ -15,6 +15,7 @@ export default function MainLayout({
   const { authenticated, ready, getAccessToken } = usePrivy();
   const router = useRouter();
   const synced = useRef(false);
+  const [authReady, setAuthReady] = useState(false);
 
   useEffect(() => {
     if (ready && !authenticated) {
@@ -35,13 +36,15 @@ export default function MainLayout({
         synced.current = true;
       } catch (err) {
         console.error('Auth sync failed:', err);
+      } finally {
+        setAuthReady(true);
       }
     };
 
     syncUser();
   }, [ready, authenticated, getAccessToken]);
 
-  if (!ready || !authenticated) return null;
+  if (!ready || !authenticated || !authReady) return null;
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">

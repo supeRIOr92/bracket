@@ -152,6 +152,17 @@ const { data } = await db
 return data;
 }
 
+async getFollowStatus(requesterId: string, targetId: string) {
+  const db = this.supabase.getClient();
+  const { data } = await db
+    .from('follows')
+    .select('follower_id')
+    .eq('follower_id', requesterId)
+    .eq('following_id', targetId)
+    .maybeSingle();
+  return { isFollowing: !!data };
+}
+
 async getFollowing(userId: string) {
   const db = this.supabase.getClient();
   const { data, error } = await db

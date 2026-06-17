@@ -42,15 +42,16 @@ api.post('/api/predictions/claim', { marketId, txHash }),
 
 // Users
 export const usersApi = {
-getProfile: (id: string) => api.get(`/api/users/${id}`),
-getProfileByAddress: (address: string) => api.get(`/api/users/address/${address}`),
-updateProfile: (data: { username?: string; bio?: string; avatarUrl?: string }) =>
+    getProfile: (id: string) => api.get(`/api/users/${id}`),
+    getProfileByAddress: (address: string) => api.get(`/api/users/address/${address}`),
+    updateProfile: (data: { username?: string; bio?: string; avatarUrl?: string }) =>
 api.put('/api/users/me', data),
-follow: (id: string) => api.post(`/api/users/${id}/follow`),
-unfollow: (id: string) => api.delete(`/api/users/${id}/follow`),
-getFollowing: (id: string) => api.get(`/api/users/${id}/following`),
-getFollowers: (id: string) => api.get(`/api/users/${id}/followers`),
-getLeaderboard: (category = 'pr_score') =>
+    follow: (id: string) => api.post(`/api/users/${id}/follow`),
+    unfollow: (id: string) => api.delete(`/api/users/${id}/follow`),
+    getFollowStatus: (id: string) => api.get(`/api/users/${id}/follow-status`),
+    getFollowing: (id: string) => api.get(`/api/users/${id}/following`),
+    getFollowers: (id: string) => api.get(`/api/users/${id}/followers`),
+    getLeaderboard: (category = 'pr_score') =>
 api.get(`/api/users/leaderboard?category=${category}`),
 };
 
