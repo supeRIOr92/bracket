@@ -23,7 +23,7 @@ export function PrivyProvider({ children }: { children: React.ReactNode }) {
         appearance: {
           theme: 'light',
           accentColor: '#2563EB',
-          logo: '/logo.svg',
+          logo: '/logo.png',
         },
         defaultChain: base,
         supportedChains: [base],
