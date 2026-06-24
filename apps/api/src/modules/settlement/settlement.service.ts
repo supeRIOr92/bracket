@@ -30,7 +30,8 @@ export class SettlementService {
 
     const pk = this.config.get('blockchain.deployerPrivateKey');
     if (pk) {
-      this.wallet = new ethers.Wallet(pk, this.provider);
+      const baseWallet = new ethers.Wallet(pk, this.provider);
+      this.wallet = new ethers.NonceManager(baseWallet) as any;
       this.contract = new ethers.Contract(
         this.config.get<string>('blockchain.contractAddress')!,
         PREDICTION_MARKET_ABI,
@@ -43,7 +44,7 @@ export class SettlementService {
    * Auto-settle cron: jalan setiap hari jam 00:01 UTC.
    * Cari semua market yang sudah lewat settleAt tapi belum settled.
    */
-  @Cron('1 0 * * *', { timeZone: 'UTC' })
+  @Cron('5 0 * * *', { timeZone: 'UTC' })
   async autoSettle() {
     this.logger.log('Running auto-settle cron...');
 
